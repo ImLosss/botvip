@@ -1,0 +1,181 @@
+require('module-alias/register');
+const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
+const { createQrisTransactionPakasir, cancelTransactionPakasir, getTransactionDetailPakasir } = require('function/pakasir');
+
+async function statusVip(bot, msg) {
+    let vipData = readJSONFileSync('database/vip_users.json');
+    let chatId = msg.chat.id;
+    if (!vipData[chatId] || !isVip(vipData[chatId].vip_until)) { 
+        bot.sendMessage(chatId, 'Status kamu saat ini belum VIP.\n\nIngin beli VIP?', { reply_markup: {
+            inline_keyboard: [
+                [{ text: 'Langganan VIP', callback_data: JSON.stringify({ function: '08' }) }],
+            ]
+        } });
+    } else {
+        bot.sendMessage(chatId, `VIP kamu aktif hingga: <b>${vipData[chatId].vip_until}</b>.\n\nUID: <code>${chatId}</code>\n\nIngin memperpanjang VIP?`, { parse_mode: 'HTML', reply_markup: {
+            inline_keyboard: [
+                [{ text: 'Perpanjang VIP', callback_data: JSON.stringify({ function: '08' }) }],
+                [{ text: 'Channel VIP', url: 'https://t.me/dongworldvip' }],
+            ]
+        } });
+    }
+}
+
+async function buyVip(bot, msg) {
+    const chatType = msg.chat?.type ?? msg.message?.chat?.type;
+    if (chatType !== 'private') return;
+
+    const chatId = msg.chat?.id ?? msg.message?.chat?.id;
+
+    bot.sendMessage(chatId, 'Ingin langganan vip berapa bulan?', { reply_markup: {
+        inline_keyboard: [
+            [{ text: '1 Bulan - Rp 10.000', callback_data: JSON.stringify({ function: '07', months: 1 }) }],
+            [{ text: '2 Bulan - Rp 20.000', callback_data: JSON.stringify({ function: '07', months: 2 }) }],
+            [{ text: '5 Bulan - Rp 50.000', callback_data: JSON.stringify({ function: '07', months: 5 }) }],
+            [{ text: '10 Bulan - Rp 100.000', callback_data: JSON.stringify({ function: '07', months: 10 }) }],
+        ]
+    } });
+}
+
+async function chargeTransaction(bot, query, data, config) {
+    if(query.message.chat.type !== 'private') return;
+
+    let chatId = query.message.chat.id;
+    let vipData = readJSONFileSync('database/vip_users.json');
+
+    if(vipData[chatId] && vipData[chatId].qris_expiry) {
+        const expiryTime = new Date(vipData[chatId].qris_expiry);
+        if (expiryTime > new Date()) {
+            return bot.sendMessage(chatId, `Kamu masih memiliki transaksi yang belum selesai. Silakan selesaikan pembayaran sebelum melakukan pembelian VIP lagi.\n\nTransaksi ini akan berakhir pada: <b>${expiryTime.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB</b>.`, { parse_mode: 'HTML' });
+        }
+    }
+
+    if (!vipData[chatId]) vipData[chatId] = { order_id: null, vip_until: null, message_id: null };
+
+    const username = query.from.username ? `@${query.from.username}` : query.from.first_name + ` ${query.from.last_name || ''}`;
+
+    let orderId = `vip-${chatId}-${Date.now()}`;
+
+    const respakasir = await createQrisTransactionPakasir(config.PAKASIR_PROJECT, orderId, data.months * config.PRICE_MONTH);
+
+    const expMins = getRemainingExpiredMin(respakasir.payment.expired_at);
+
+    const encodedQris = encodeURIComponent(respakasir.payment.payment_number);
+    let qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedQris}`;
+
+    bot.sendPhoto(query.message.chat.id, qrImageUrl, {
+        parse_mode: 'HTML',
+        caption:
+            `Order ID: <code>${respakasir.payment.order_id}</code>\n` +
+            `Nama: ${username}\n` +
+            `VIP selama: ${data.months} Bulan\n` +
+            `Total: IDR ${respakasir.payment.total_payment}\n` +
+            `Metode Pembayaran: QRIS\n` +
+            `Expired: ${convertToWib(respakasir.payment.expired_at)} WIB (${expMins} Menit)\n` +
+            // `qrisLink: ${qrImageUrl}\n\n` +
+            `Catatan:\n` +
+            `- Pastikan kamu melakukan pembayaran sesuai dengan nominal diatas.\n` +
+            `- Setelah melakukan pembayaran, harap tunggu beberapa saat hingga sistem kami memproses pembayaran kamu secara otomatis.\n` +
+            `- VIP kamu akan diperpanjang jika status kamu saat ini sudah vip\n` +
+            `- Hubungi admin @Losss11 jika ada kendala.`,
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: 'Batal', callback_data: JSON.stringify({ function: '09' }) }],
+                [{ text: 'Cek Pembayaran', callback_data: JSON.stringify({ function: '10' }) }]
+            ]
+        }
+    }).then((result) => {
+        vipData[chatId].order_id = respakasir.payment.order_id;
+        vipData[chatId].amount = respakasir.payment.amount;
+        vipData[chatId].message_id = result.message_id;
+        vipData[chatId].qris_expiry = new Date(Date.now() + expMins * 60000).toISOString();
+        writeJSONFileSync('database/vip_users.json', vipData);
+    });  
+}
+
+async function cancelTransaction(bot, query) {
+    let chatId = query.message.chat.id;
+    let vipData = readJSONFileSync('database/vip_users.json');
+    const cancelResult = await cancelTransactionPakasir(vipData[chatId].order_id, vipData[chatId].amount);
+    if (!cancelResult.status) return bot.sendMessage(chatId, 'Gagal membatalkan transaksi. Silakan coba lagi nanti.');
+    vipData[chatId].qris_expiry = null;
+    writeJSONFileSync('database/vip_users.json', vipData);
+
+    bot.sendMessage(chatId, 'Transaksi berhasil dibatalkan. Kamu bisa mencoba membeli VIP lagi jika masih berminat.', { reply_markup: {
+        inline_keyboard: [
+            [{ text: 'Beli VIP', callback_data: JSON.stringify({ function: '08' }) }]
+        ]
+    } });
+}
+
+async function checkTransaction(bot, query, data, config) {
+    let chatId = query.message.chat.id;
+    let vipData = readJSONFileSync('database/vip_users.json');
+    if (!vipData[chatId] || !vipData[chatId].order_id) return bot.sendMessage(chatId, 'Tidak ada transaksi yang sedang berlangsung. Silakan lakukan pembelian VIP terlebih dahulu.', { reply_markup: {
+        inline_keyboard: [
+            [{ text: 'Beli VIP', callback_data: JSON.stringify({ function: '08' }) }]
+        ]
+    } });
+    const detailResult = await getTransactionDetailPakasir(vipData[chatId].order_id, vipData[chatId].amount);
+    if (!detailResult.transaction?.status) return bot.sendMessage(chatId, 'Gagal memeriksa transaksi. Silakan coba lagi nanti.');
+    const status = detailResult.transaction.status;
+    if (status === 'completed') {
+        bot.deleteMessage(chatId, vipData[chatId].message_id).catch(err => console.error('Failed to delete QR message:', err));
+        vipData[chatId].vip_until = vipData[chatId].vip_until ? new Date(Math.max(new Date(vipData[chatId].vip_until).getTime(), Date.now())) : new Date();
+        vipData[chatId].vip_until.setMonth(vipData[chatId].vip_until.getMonth() + (vipData[chatId].amount / config.PRICE_MONTH));
+        vipData[chatId].vip_until = vipData[chatId].vip_until.toISOString().split('T')[0];
+        vipData[chatId].order_id = null;
+        vipData[chatId].amount = null;
+        vipData[chatId].qris_expiry = null;
+        writeJSONFileSync('database/vip_users.json', vipData);
+        return bot.sendMessage(chatId, 'Pembayaran berhasil diterima! VIP kamu sudah aktif.\n\nCek status VIP: /status');
+    } else if (status === 'pending') return bot.sendMessage(chatId, 'Pembayaran masih dalam status pending. Segera selesaikan pembayaran.');
+    else {
+        return bot.sendMessage(chatId, `Pembayaran gagal atau dibatalkan. Status saat ini: ${status}. Kamu bisa mencoba membeli VIP lagi jika masih berminat.`, { reply_markup: {
+            inline_keyboard: [
+                [{ text: 'Beli VIP', callback_data: JSON.stringify({ function: '08' }) }]
+            ]
+        } });
+    }
+}
+
+function isVip(vip_until) {
+    if (!vip_until) return false;
+
+    const endWib = new Date(`${vip_until}T23:59:59+07:00`);
+    if (Number.isNaN(endWib.getTime())) return false;
+
+    return endWib.getTime() >= Date.now();
+}
+
+function getRemainingExpiredMin(expiryTarget) {
+    if (!expiryTarget) return 0;
+
+    let expDateStr = String(expiryTarget);
+
+    if (expDateStr.includes(' ') && !expDateStr.includes('T')) {
+        expDateStr = expDateStr.replace(' ', 'T') + '+07:00';
+    }
+
+    const exp = new Date(expDateStr);
+    const now = new Date(); 
+
+    const mins = Math.ceil((exp - now) / 60000);
+    return Number.isFinite(mins) ? Math.max(0, mins) : 0;
+}
+
+function convertToWib(isoString) {
+    const date = new Date(isoString);
+    
+    // Menggunakan Intl.DateTimeFormat untuk konversi timezone ke Asia/Jakarta (WIB)
+    return date.toLocaleTimeString('en-US', {
+        timeZone: 'Asia/Jakarta',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false // Memastikan format 24 jam
+    });
+}
+
+module.exports = {
+    buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction
+};

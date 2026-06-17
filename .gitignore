@@ -1,0 +1,11 @@
+node_modules
+config.json
+*.json
+yt-dlp.exe
+ffmpeg.exe
+database.zip
+downloads/
+*.mp4
+*.txt
+*.png
+*.jpg
