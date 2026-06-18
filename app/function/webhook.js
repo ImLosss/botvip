@@ -38,6 +38,9 @@ module.exports = function(bot) {
               vipData[chatId].order_id = null;
               vipData[chatId].amount = null;
               vipData[chatId].qris_expiry = null;
+
+              bot.deleteMessage(chatId, vipData[chatId].message_id).catch(err => console.error('Failed to delete message:', err.message));
+              
               vipData[chatId].message_id = null;
 
               writeJSONFileSync('database/vip_users.json', vipData);
