@@ -140,6 +140,7 @@ async function cancelTransaction(bot, query) {
     let chatId = query.message.chat.id;
     let vipData = readJSONFileSync('database/vip_users.json');
     const cancelResult = await cancelTransactionPakasir(vipData[chatId].order_id, vipData[chatId].amount);
+    console.log(cancelResult, 'cancelResult');
     if (!cancelResult.status) return bot.sendMessage(chatId, 'Gagal membatalkan transaksi. Silakan coba lagi nanti.');
     vipData[chatId].qris_expiry = null;
     vipData[chatId].order_id = null;
