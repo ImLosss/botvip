@@ -120,7 +120,7 @@ async function chargeTransaction(bot, query, data, config) {
             `- Pastikan kamu melakukan pembayaran sesuai dengan nominal diatas.\n` +
             `- Setelah melakukan pembayaran, harap tunggu beberapa saat hingga sistem kami memproses pembayaran kamu secara otomatis.\n` +
             `- VIP kamu akan diperpanjang jika status kamu saat ini sudah vip\n` +
-            `- Hubungi admin @Losss11 jika ada kendala.`,
+            `- Hubungi admin jika ada kendala.`,
         reply_markup: {
             inline_keyboard: [
                 [{ text: 'Batal', callback_data: JSON.stringify({ function: '09' }) }],
