@@ -32,6 +32,8 @@ if(!fs.existsSync('./database/vip_users.json')) writeJSONFileSync('./database/vi
 
 if(!fs.existsSync('./database/series.json')) writeJSONFileSync('./database/series.json', {});
 
+if(!fs.existsSync('./database/vip_code.json')) writeJSONFileSync('./database/vip_code.json', []);
+
 // Fungsi untuk memulai bot setelah pesan lama dihapus
 async function startBot() {
 

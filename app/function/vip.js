@@ -1,6 +1,7 @@
 require('module-alias/register');
 const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
 const { createQrisTransactionPakasir, cancelTransactionPakasir, getTransactionDetailPakasir } = require('function/pakasir');
+const { getMessageInput } = require('service/messageInputService');
 
 async function statusVip(bot, msg, config) {
     let vipData = readJSONFileSync('database/vip_users.json');
@@ -35,6 +36,46 @@ async function buyVip(bot, msg) {
             [{ text: '10 Bulan - Rp 100.000', callback_data: JSON.stringify({ function: '07', months: 10 }) }],
         ]
     } });
+}
+
+async function vipCode(bot, msg) {
+    let jumlah = await getMessageInput(bot, msg.chat.id, msg.from.id, 'Masukkan jumlah code vip yang akan dibuat:');
+    if (!jumlah.text || isNaN(jumlah.text) || parseInt(jumlah.text) <= 0) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka yang valid untuk jumlah code vip.');
+    let days = await getMessageInput(bot, msg.chat.id, msg.from.id, 'VIP untuk berapa hari?');
+    if (!days.text || isNaN(days.text) || parseInt(days.text) <= 0) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka yang valid untuk jumlah hari code vip.');
+    jumlah = parseInt(jumlah.text);
+    days = parseInt(days.text);
+
+    const vipCodes = readJSONFileSync('database/vip_code.json');
+    for (let i = 0; i < jumlah; i++) {
+        const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+        vipCodes.push({ code, days });
+    }
+    writeJSONFileSync('database/vip_code.json', vipCodes);
+
+    bot.sendMessage(msg.chat.id, `Berhasil membuat ${jumlah} code vip selama ${days} hari.\nGunakan code ini dengan cara /claimvip [code]\n\nCode vip:\n${vipCodes.slice(-jumlah).map(code => `<code>${code.code}</code>`).join('\n')}`, { parse_mode: 'HTML' });
+}
+
+async function claimVip(bot, msg, code, config) {
+    let vipCodes = readJSONFileSync('database/vip_code.json');
+    let vipData = readJSONFileSync('database/vip_users.json');
+    let chatId = msg.chat.id;
+
+    const codeIndex = vipCodes.findIndex(vipCode => vipCode.code === code);
+    if (codeIndex === -1) return bot.sendMessage(chatId, 'Code VIP tidak valid atau sudah digunakan.');
+
+    const days = vipCodes[codeIndex].days;
+    if (!vipData[chatId]) vipData[chatId] = { order_id: null, vip_until: null, message_id: null };
+
+    vipData[chatId].vip_until = vipData[chatId].vip_until ? new Date(Math.max(new Date(vipData[chatId].vip_until).getTime(), Date.now())) : new Date();
+    vipData[chatId].vip_until.setDate(vipData[chatId].vip_until.getDate() + days);
+    vipData[chatId].vip_until = vipData[chatId].vip_until.toISOString().split('T')[0];
+
+    writeJSONFileSync('database/vip_users.json', vipData);
+    vipCodes.splice(codeIndex, 1);
+    writeJSONFileSync('database/vip_code.json', vipCodes);
+
+    bot.sendMessage(chatId, `Selamat! VIP kamu telah diperpanjang selama ${days} hari.\nVIP aktif hingga: <b>${vipData[chatId].vip_until}</b>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL.replace('@', '')}` }]] } });
 }
 
 async function chargeTransaction(bot, query, data, config) {
@@ -177,5 +218,5 @@ function convertToWib(isoString) {
 }
 
 module.exports = {
-    buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction, isVip
+    buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction, isVip, vipCode, claimVip
 };

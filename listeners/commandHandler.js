@@ -6,12 +6,14 @@ const cmd = require('service/commandImport')
 const prefixFunctionsAdmin = {
     'sendvip': withErrorHandling((bot, msg, value, config, fromId) => cmd.sendVip(bot, msg, value, config)),
     'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value, config)),
+    'vipcode': withErrorHandling((bot, msg, value, config, fromId) => cmd.vipCode(bot, msg))
 }
 
 const prefixFunctions = {
     'buyvip': withErrorHandling((bot, msg, value, config, fromId) => cmd.buyVip(bot, msg, value)),
     'status': withErrorHandling((bot, msg, value, config, fromId) => cmd.statusVip(bot, msg, config)),
     'watch': withErrorHandling((bot, msg, value, config, fromId) => cmd.watchVip(bot, msg, value, config)),
+    'claimvip': withErrorHandling((bot, msg, value, config, fromId) => cmd.claimVip(bot, msg, value))
 }
 
 const prefixFunctionsStart = {
@@ -21,6 +23,7 @@ const prefixFunctionsStart = {
 const prefixFunctionsDB = {
     'dlvs': withErrorHandling((bot, msg, value, config, fromId) => cmd.dlvs(bot, msg, value, config)),
     'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value, config)),
+    'vipcode': withErrorHandling((bot, msg, value, config, fromId) => cmd.vipCode(bot, msg))
 }
 
 module.exports = (function() {
