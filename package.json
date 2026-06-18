@@ -1,0 +1,26 @@
+{
+  "author": "https://github.com/ImLosss",
+  "scripts": {
+    "start": "nodemon index.js",
+    "restart": "nodemon index.js"
+  },
+  "dependencies": {
+    "archiver": "^8.0.0",
+    "express": "^5.1.0",
+    "got": "^14.6.6",
+    "module-alias": "^2.2.3",
+    "moment-timezone": "^0.5.45",
+    "node-cache": "^5.1.2",
+    "node-telegram-bot-api": "^0.66.0",
+    "proper-lockfile": "^4.1.2"
+  },
+  "_moduleAliases": {
+    "listeners": "./listeners",
+    "import": "./app/service/import",
+    "function": "./app/function",
+    "console": "./app/logs/console",
+    "controller": "./app/controller",
+    "service": "./app/service",
+    "cache": "./app/service/cache"
+  }
+}
