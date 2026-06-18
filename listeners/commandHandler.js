@@ -4,7 +4,6 @@ const { readJSONFileSync, writeJSONFileSync, cutVal, withErrorHandling, updateFi
 const cmd = require('service/commandImport')
 
 const prefixFunctionsAdmin = {
-    'sendvip': withErrorHandling((bot, msg, value, config, fromId) => cmd.sendVip(bot, msg, value, config)),
     'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value, config)),
     'vipcode': withErrorHandling((bot, msg, value, config, fromId) => cmd.vipCode(bot, msg))
 }
@@ -21,7 +20,6 @@ const prefixFunctionsStart = {
 }
 
 const prefixFunctionsDB = {
-    'dlvs': withErrorHandling((bot, msg, value, config, fromId) => cmd.dlvs(bot, msg, value, config)),
     'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value, config)),
     'vipcode': withErrorHandling((bot, msg, value, config, fromId) => cmd.vipCode(bot, msg))
 }
