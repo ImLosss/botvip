@@ -81,6 +81,6 @@ module.exports = function(bot) {
     }
   });
 
-  const PORT = process.env.PORT || 2045;
+  const PORT = config.WEBHOOK_PORT || 2045;
   server.listen(PORT, () => console.log(`Sociabuzz webhook listening on port ${PORT}`));
 };
