@@ -11,6 +11,7 @@ async function seriesHandler(bot, msg, value, config) {
     if(value.startsWith('delete')) deleteSeries(bot, msg, value, config);
     if(value.startsWith('update')) updateSeries(bot, msg, value, config);
     if(value.startsWith('episode')) newEpisode(bot, msg, value, config);
+    if(value.startsWith('delepisode')) deleteEpisode(bot, msg, value, config);
 }
 
 async function newSeries(bot, msg, config) {
@@ -129,6 +130,33 @@ async function newEpisode(bot, msg, value, config) {
     seriesData[seriesId].episodes[episode].push({ resolusi, file_id: videoFileId });
     writeJSONFileSync('./database/series.json', seriesData);
     bot.sendMessage(msg.chat.id, `Episode ${episode} dengan resolusi ${resolusi} berhasil ditambahkan ke series <b>${seriesData[seriesId].title}</b>.`, { parse_mode: 'HTML' });
+}
+
+async function deleteEpisode(bot, msg, value, config) {
+    const [_, seriesId, episode] = value.split(' ');
+    if (!seriesId || !episode) return bot.sendMessage(msg.chat.id, 'Masukkan ID series dan episode yang ingin dihapus. Format: /series delepisode <id_series> <episode>');
+    
+    const seriesData = readJSONFileSync('./database/series.json');
+
+    let confirm = await getChoiceInput(bot, msg.chat.id, `Apakah Anda yakin ingin menghapus episode ${episode} dari series <b>${seriesData[seriesId]?.title || 'Unknown'}</b>?`, ['Ya', 'Tidak']).catch(() => null);
+    if (!confirm || confirm === 'Tidak') return bot.sendMessage(msg.chat.id, 'Penghapusan episode dibatalkan.');
+
+    if (!seriesData[seriesId]) return bot.sendMessage(msg.chat.id, 'Series dengan ID tersebut tidak ditemukan.');
+    if (!seriesData[seriesId].episodes[episode]) return bot.sendMessage(msg.chat.id, `Episode dengan nomor tersebut tidak ditemukan dalam series ${seriesData[seriesId].title}.`);
+    
+    let deleteButton = seriesData[seriesId].episodes[episode].map(ep => ep.resolusi);
+    deleteButton.push('Hapus Episode');
+    
+    let deleteChoice = await getChoiceInput(bot, msg.chat.id, 'Pilih resolusi video yang ingin dihapus:', deleteButton).catch(() => null);
+    if (!deleteChoice) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap pilih resolusi video.');
+    
+    seriesData[seriesId].episodes[episode] = seriesData[seriesId].episodes[episode].filter(ep => ep.resolusi !== deleteChoice);
+    if (seriesData[seriesId].episodes[episode].length === 0) delete seriesData[seriesId].episodes[episode];
+    
+    if(deleteChoice === 'Hapus Episode') delete seriesData[seriesId].episodes[episode];
+    
+    writeJSONFileSync('./database/series.json', seriesData);
+    bot.sendMessage(msg.chat.id, `${ deleteChoice === 'Hapus Episode' ? `Episode ${episode} berhasil dihapus dari series ` : `Resolusi ${deleteChoice} berhasil dihapus dari episode ${episode} dalam series ` }<b>${seriesData[seriesId].title}</b>.`, { parse_mode: 'HTML' });
 }
 
 function getNewId(seriesData){
