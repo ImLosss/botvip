@@ -13,11 +13,11 @@ module.exports = function(bot) {
       });
       req.on('end', async () => {
         try {
+          const data = JSON.parse(body || '{}');
+
+          console.log(data, 'webhook payload');
+          console.log(req.url, 'webhook url');
           if (req.url === '/midtrans') {
-            const data = JSON.parse(body || '{}');
-
-            console.log(data, 'Midtrans webhook payload');
-
             if(data.transaction_status && data.transaction_status === 'settlement') {
               const uid = data.custom_field1 || false;
               if(!uid) return;
