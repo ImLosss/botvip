@@ -110,7 +110,7 @@ async function chargeTransaction(bot, query, data, config) {
             `Order ID: <code>${respakasir.payment.order_id}</code>\n` +
             `Nama: ${username}\n` +
             `VIP selama: ${data.months} Bulan\n` +
-            `Total: IDR ${respakasir.payment.total_payment}\n` +
+            `Total: IDR ${respakasir.payment.total_payment.toLocaleString('id-ID')}\n` +
             `Metode Pembayaran: QRIS\n` +
             `Expired: ${convertToWib(respakasir.payment.expired_at)} WIB (${expMins} Menit)\n` +
             // `qrisLink: ${qrImageUrl}\n\n` +
@@ -121,8 +121,7 @@ async function chargeTransaction(bot, query, data, config) {
             `- Hubungi admin @Losss11 jika ada kendala.`,
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'Batal', callback_data: JSON.stringify({ function: '09' }) }],
-                [{ text: 'Cek Pembayaran', callback_data: JSON.stringify({ function: '10' }) }]
+                [{ text: 'Batal', callback_data: JSON.stringify({ function: '09' }) }]
             ]
         }
     }).then((result) => {
@@ -140,6 +139,9 @@ async function cancelTransaction(bot, query) {
     const cancelResult = await cancelTransactionPakasir(vipData[chatId].order_id, vipData[chatId].amount);
     if (!cancelResult.status) return bot.sendMessage(chatId, 'Gagal membatalkan transaksi. Silakan coba lagi nanti.');
     vipData[chatId].qris_expiry = null;
+    vipData[chatId].order_id = null;
+    vipData[chatId].amount = null;
+    vipData[chatId].message_id = null;
     writeJSONFileSync('database/vip_users.json', vipData);
 
     bot.sendMessage(chatId, 'Transaksi berhasil dibatalkan. Kamu bisa mencoba membeli VIP lagi jika masih berminat.', { reply_markup: {
@@ -168,6 +170,7 @@ async function checkTransaction(bot, query, data, config) {
         vipData[chatId].order_id = null;
         vipData[chatId].amount = null;
         vipData[chatId].qris_expiry = null;
+        vipData[chatId].message_id = null;
         writeJSONFileSync('database/vip_users.json', vipData);
         return bot.sendMessage(chatId, 'Pembayaran berhasil diterima! VIP kamu sudah aktif.\n\nCek status VIP: /status');
     } else if (status === 'pending') return bot.sendMessage(chatId, 'Pembayaran masih dalam status pending. Segera selesaikan pembayaran.');
