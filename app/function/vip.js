@@ -177,5 +177,5 @@ function convertToWib(isoString) {
 }
 
 module.exports = {
-    buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction
+    buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction, isVip
 };

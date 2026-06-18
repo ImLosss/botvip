@@ -11,7 +11,8 @@ async function getChoiceInput(bot, chatId, text_button, buttons, options = {}) {
         bot.sendMessage(chatId, text_button, {
             reply_markup: {
                 inline_keyboard: inline_keyboard
-            }
+            },
+            parse_mode: options.parse_mode || 'HTML'
         }).then((result) => {
             let timeout = setTimeout(() => {
                 pendingInputs.delete(id);

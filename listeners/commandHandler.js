@@ -5,7 +5,7 @@ const cmd = require('service/commandImport')
 
 const prefixFunctionsAdmin = {
     'sendvip': withErrorHandling((bot, msg, value, config, fromId) => cmd.sendVip(bot, msg, value, config)),
-    'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value)),
+    'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value, config)),
 }
 
 const prefixFunctions = {
@@ -20,6 +20,7 @@ const prefixFunctionsStart = {
 
 const prefixFunctionsDB = {
     'dlvs': withErrorHandling((bot, msg, value, config, fromId) => cmd.dlvs(bot, msg, value, config)),
+    'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value, config)),
 }
 
 module.exports = (function() {
