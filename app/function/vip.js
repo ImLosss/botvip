@@ -121,7 +121,8 @@ async function chargeTransaction(bot, query, data, config) {
             `- Hubungi admin @Losss11 jika ada kendala.`,
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'Batal', callback_data: JSON.stringify({ function: '09' }) }]
+                [{ text: 'Batal', callback_data: JSON.stringify({ function: '09' }) }],
+                // [{ text: 'Cek Pembayaran', callback_data: JSON.stringify({ function: '10' }) }]
             ]
         }
     }).then((result) => {
