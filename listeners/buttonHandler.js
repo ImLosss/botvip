@@ -7,7 +7,7 @@ const { resolveChoiceInput } = require('service/choiceInputService');
 const callbackFunctions = {
     '07': { handler: cmd.chargeTransaction, delete: true },
     '08': { handler: cmd.buyVip, delete: true },
-    '09': { handler: cmd.cancelTransaction, delete: true },
+    '09': { handler: cmd.cancelTransaction, delete: false },
     '10': { handler: cmd.checkTransaction, delete: false },
 };
 

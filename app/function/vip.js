@@ -147,6 +147,8 @@ async function cancelTransaction(bot, query) {
     vipData[chatId].message_id = null;
     writeJSONFileSync('database/vip_users.json', vipData);
 
+    bot.deleteMessage(chatId, query.message.message_id).catch(err => console.error('Failed to delete message:', err.message));
+
     bot.sendMessage(chatId, 'Transaksi berhasil dibatalkan. Kamu bisa mencoba membeli VIP lagi jika masih berminat.', { reply_markup: {
         inline_keyboard: [
             [{ text: 'Beli VIP', callback_data: JSON.stringify({ function: '08' }) }]
