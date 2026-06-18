@@ -2,7 +2,7 @@ require('module-alias/register');
 const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
 const { createQrisTransactionPakasir, cancelTransactionPakasir, getTransactionDetailPakasir } = require('function/pakasir');
 
-async function statusVip(bot, msg) {
+async function statusVip(bot, msg, config) {
     let vipData = readJSONFileSync('database/vip_users.json');
     let chatId = msg.chat.id;
     if (!vipData[chatId] || !isVip(vipData[chatId].vip_until)) { 
@@ -15,7 +15,7 @@ async function statusVip(bot, msg) {
         bot.sendMessage(chatId, `VIP kamu aktif hingga: <b>${vipData[chatId].vip_until}</b>.\n\nUID: <code>${chatId}</code>\n\nIngin memperpanjang VIP?`, { parse_mode: 'HTML', reply_markup: {
             inline_keyboard: [
                 [{ text: 'Perpanjang VIP', callback_data: JSON.stringify({ function: '08' }) }],
-                [{ text: 'Channel VIP', url: 'https://t.me/dongworldvip' }],
+                [{ text: 'Channel VIP', url: `https://t.me/${config.VIP_CHANNEL}` }],
             ]
         } });
     }

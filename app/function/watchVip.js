@@ -6,7 +6,7 @@ async function watchVip(bot, msg, value, config) {
     if(!value) return bot.sendMessage(msg.chat.id, 'Terjadi kesalahan, silakan coba lagi nanti.');
     const [id, epStr, resStr] = value.split('_');
     const episode = parseInt(epStr);
-    const resolusi = parseInt(resStr) || 1080;
+    const resolusi = resStr || '1080p';
 
     let vipUsers = readJSONFileSync('database/vip_users.json');
     if (!vipUsers[msg.chat.id] || !isVip(vipUsers[msg.chat.id].vip_until)) {
@@ -28,7 +28,7 @@ async function watchVip(bot, msg, value, config) {
 
     const videoData = targetEpisode.find(item => item.resolusi == resolusi) || targetEpisode[0];
     if (!videoData) {
-        return bot.sendMessage(msg.chat.id, `Resolusi ${resolusi}p Episode ${episode} ${series[id].title} tidak tersedia, laporkan ke admin agar segera diperbaiki.`);
+        return bot.sendMessage(msg.chat.id, `Resolusi ${resolusi} Episode ${episode} ${series[id].title} tidak tersedia, laporkan ke admin agar segera diperbaiki.`);
     }
 
     const usernameBot = await bot.getMe().then(me => me.username).catch(() => null);
@@ -82,7 +82,7 @@ async function watchVip(bot, msg, value, config) {
             }
 
             navButtons.push({
-                text: `${item.resolusi}p`,
+                text: `${item.resolusi}`,
                 url: `https://t.me/${usernameBot}?start=watch_${id}_${episode}_${item.resolusi}`
             });
         }

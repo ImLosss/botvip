@@ -102,12 +102,13 @@ async function newEpisode(bot, msg, value, config) {
     if (!confirm || confirm === 'Tidak') return bot.sendMessage(msg.chat.id, 'Penambahan episode dibatalkan.');
 
     let episode = await getMessageInput(bot, msg.chat.id, msg.from.id, 'Masukkan episode:').catch(() => null);
-    if (!episode.text || isNaN(episode.text)) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka untuk episode.');
+    if (!episode.text) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka untuk episode.');
     episode = episode.text.trim();
 
-    let resolusi = await getMessageInput(bot, msg.chat.id, msg.from.id, 'Masukkan resolusi (contoh: 1080):').catch(() => null);
-    if (!resolusi.text) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka untuk resolusi.');
-    resolusi = resolusi.text.trim();
+    let resolusi = await getChoiceInput(bot, msg.chat.id, 'Pilih resolusi video:', ['480p', '720p', '1080p', '4K']).catch(() => null);
+    if (!resolusi) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap pilih resolusi video.');
+    let notNewRes = seriesData[seriesId].episodes[episode]?.find(item => item.resolusi === resolusi);
+    if (notNewRes) return bot.sendMessage(msg.chat.id, `Episode ${episode} dengan resolusi ${resolusi} sudah ada. Gunakan resolusi lain atau update episode yang ada.`);
 
     const usernameBot = await bot.getMe().then(me => me.username).catch(() => null);
     if (!usernameBot) return bot.sendMessage(msg.chat.id, 'Gagal mendapatkan informasi bot. Silakan coba lagi nanti.');
@@ -127,7 +128,7 @@ async function newEpisode(bot, msg, value, config) {
 
     seriesData[seriesId].episodes[episode].push({ resolusi, file_id: videoFileId });
     writeJSONFileSync('./database/series.json', seriesData);
-    bot.sendMessage(msg.chat.id, `Episode ${episode} dengan resolusi ${resolusi}p berhasil ditambahkan ke series <b>${seriesData[seriesId].title}</b>.`, { parse_mode: 'HTML' });
+    bot.sendMessage(msg.chat.id, `Episode ${episode} dengan resolusi ${resolusi} berhasil ditambahkan ke series <b>${seriesData[seriesId].title}</b>.`, { parse_mode: 'HTML' });
 }
 
 function getNewId(seriesData){

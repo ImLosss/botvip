@@ -10,7 +10,7 @@ const prefixFunctionsAdmin = {
 
 const prefixFunctions = {
     'buyvip': withErrorHandling((bot, msg, value, config, fromId) => cmd.buyVip(bot, msg, value)),
-    'status': withErrorHandling((bot, msg, value, config, fromId) => cmd.statusVip(bot, msg)),
+    'status': withErrorHandling((bot, msg, value, config, fromId) => cmd.statusVip(bot, msg, config)),
     'watch': withErrorHandling((bot, msg, value, config, fromId) => cmd.watchVip(bot, msg, value, config)),
 }
 
@@ -58,7 +58,7 @@ module.exports = (function() {
                                 return prefixFunctions[funcName[0]](bot, msg, value, config, fromId);
                             } else if (funcName[0] === 'start') {
                                 const payload = String(value || '').trim();
-                                if (!payload) return cmd.statusVip(bot, msg);
+                                if (!payload) return cmd.statusVip(bot, msg, config);
 
                                 const [key, ...rest] = payload.split('_');
                                 const restValue = rest.join('_'); // sisanya (mis. id / token)
@@ -68,7 +68,7 @@ module.exports = (function() {
                                     return prefixFunctionsStart[key](bot, msg, restValue, config, fromId);
                                 }
 
-                                return cmd.statusVip(bot, msg);
+                                return cmd.statusVip(bot, msg, config);
                             }
                         } else if (config.DB_ID == msg.chat.id) {
                             if (prefixFunctionsDB[funcName[0]]) {
