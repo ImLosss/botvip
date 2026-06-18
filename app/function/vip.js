@@ -30,10 +30,10 @@ async function buyVip(bot, msg) {
 
     bot.sendMessage(chatId, 'Ingin langganan vip berapa bulan?', { reply_markup: {
         inline_keyboard: [
-            [{ text: '1 Bulan - Rp 10.000', callback_data: JSON.stringify({ function: '07', months: 1 }) }],
-            [{ text: '2 Bulan - Rp 20.000', callback_data: JSON.stringify({ function: '07', months: 2 }) }],
-            [{ text: '5 Bulan - Rp 50.000', callback_data: JSON.stringify({ function: '07', months: 5 }) }],
-            [{ text: '10 Bulan - Rp 100.000', callback_data: JSON.stringify({ function: '07', months: 10 }) }],
+            [{ text: `1 Bulan - Rp ${config.PRICE_MONTH.toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 1 }) }],
+            [{ text: `2 Bulan - Rp ${(config.PRICE_MONTH * 2).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 2 }) }],
+            [{ text: `5 Bulan - Rp ${(config.PRICE_MONTH * 5).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 5 }) }],
+            [{ text: `10 Bulan - Rp ${(config.PRICE_MONTH * 10).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 10 }) }],
         ]
     } });
 }
