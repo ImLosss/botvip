@@ -30,10 +30,6 @@ module.exports = (function() {
             if (typeof fn === 'function') {
                 if (callbackFunctions[data.function].delete) bot.deleteMessage(query.message.chat.id, query.message.message_id);
                 fn(bot, query, data, config);
-            } else if (data.type === 'INPUT_FILE') {
-                const resolved = resolveFileInput(data.id, data.file_id);
-                bot.deleteMessage(query.message.chat.id, query.message.message_id);
-                if (resolved) bot.answerCallbackQuery(query.id, { text: `File ${data.file_id} selected` });
             } else if (data.type === 'INPUT_BUTTON') {
                 const resolved = resolveChoiceInput(data.id, data.value);
                 bot.deleteMessage(query.message.chat.id, query.message.message_id);

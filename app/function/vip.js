@@ -26,6 +26,8 @@ async function buyVip(bot, msg) {
     const chatType = msg.chat?.type ?? msg.message?.chat?.type;
     if (chatType !== 'private') return;
 
+    let config = readJSONFileSync('./config.json');
+
     const chatId = msg.chat?.id ?? msg.message?.chat?.id;
 
     bot.sendMessage(chatId, 'Ingin langganan vip berapa bulan?', { reply_markup: {
