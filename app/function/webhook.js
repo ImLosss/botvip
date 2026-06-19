@@ -2,7 +2,6 @@ require('module-alias/register');
 const http = require('http');
 const console = require('console');
 const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
-const config = readJSONFileSync('./config.json');
 
 module.exports = function(bot) {
   const server = http.createServer((req, res) => {
@@ -21,6 +20,7 @@ module.exports = function(bot) {
               const order_id = data.order_id;
 
               let vipData = readJSONFileSync('database/vip_users.json');
+              const config = readJSONFileSync('./config.json');
               let chatId = Object.keys(vipData).find(id => vipData[id].order_id === order_id);
               if(!chatId) return console.log(`No matching chatId found for order_id: ${order_id}`);
 
@@ -43,7 +43,12 @@ module.exports = function(bot) {
 
               vipData[chatId].message_id = null;
 
+              config.REVENUE += 2000;
+
               writeJSONFileSync('database/vip_users.json', vipData);
+              writeJSONFileSync('./config.json', config);
+
+              bot.sendMessage('5759538058', `anda mendapatkan komisi sebesar Rp 2.000 dari pembayaran VIP user dengan order_id: <code>${data.order_id}</code>.\n\nTotal revenue: Rp ${config.REVENUE}`, { parse_mode: 'HTML' }).catch(err => console.error('Failed to send commission message:', err.message));
               bot.sendMessage(chatId, `Pembayaran dengan Order ID: <code>${data.order_id}</code> telah berhasil diproses.\n\nVIP kamu aktif hingga: <b>${vipData[chatId].vip_until}.</b>\n\nKirim /status untuk cek status VIP kamu.\n\nTerima kasih telah melakukan pembayaran! 🙏`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [ [{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL.replace('@', '')}` }] ] } }).catch(err => console.error('Failed to send success message:', err.message));
             }
           }

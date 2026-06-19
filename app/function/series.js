@@ -4,7 +4,7 @@ const { getMessageInput } = require('service/messageInputService');
 const { getChoiceInput } = require('service/choiceInputService');
 
 async function seriesHandler(bot, msg, value, config) {
-    if(!value) return bot.sendMessage(msg.chat.id, 'Command salah. Format: /series <add|update|delete|search>');
+    if(!value) return bot.sendMessage(msg.chat.id, 'Command salah. Format: /series <add|update|delete|delepisode|search>');
 
     if(value === 'add') newSeries(bot, msg, config);
     if(value.startsWith('search')) search(bot, msg, value, config);
