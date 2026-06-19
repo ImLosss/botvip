@@ -16,7 +16,7 @@ async function statusVip(bot, msg, config) {
         bot.sendMessage(chatId, `VIP kamu aktif hingga: <b>${vipData[chatId].vip_until}</b>.\n\nUID: <code>${chatId}</code>\n\nIngin memperpanjang VIP?`, { parse_mode: 'HTML', reply_markup: {
             inline_keyboard: [
                 [{ text: 'Perpanjang VIP', callback_data: JSON.stringify({ function: '08' }) }],
-                [{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL}` }],
+                [{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL.replace('@', '')}` }],
             ]
         } });
     }
@@ -78,6 +78,8 @@ async function claimVip(bot, msg, code, config) {
     writeJSONFileSync('database/vip_code.json', vipCodes);
 
     bot.sendMessage(chatId, `Selamat! VIP kamu telah diperpanjang selama ${days} hari.\nVIP aktif hingga: <b>${vipData[chatId].vip_until}</b>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL.replace('@', '')}` }]] } });
+
+    bot.sendMessage(config.OWNER_ID, `Code VIP ${code} telah digunakan oleh ${msg.from.username ? '@' + msg.from.username : msg.from.first_name} (${chatId}). VIP diperpanjang selama ${days} hari.`, { parse_mode: 'HTML' });
 }
 
 async function chargeTransaction(bot, query, data, config) {
