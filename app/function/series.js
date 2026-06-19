@@ -115,7 +115,7 @@ async function newEpisode(bot, msg, value, config) {
     if (!usernameBot) return bot.sendMessage(msg.chat.id, 'Gagal mendapatkan informasi bot. Silakan coba lagi nanti.');
 
     bot.sendVideo(config.DB_ID, videoFileId).catch(() => console.log('Gagal menyimpan video ke database'));
-
+    
     let isNew = seriesData[seriesId].episodes[episode] ? false : true;
     if (isNew) {
         seriesData[seriesId].episodes[episode] = [];
@@ -123,8 +123,8 @@ async function newEpisode(bot, msg, value, config) {
         if (sendNotif === 'Ya') {
             bot.sendPhoto(config.USERNAME_CHANNEL, seriesData[seriesId].cover, { caption: `✨*UPDATE VIP*✨\n\n${seriesData[seriesId].title} Episode ${episode} Subtitle Indonesia`, parse_mode: 'Markdown', reply_markup: {
                 inline_keyboard: [
-                    [{ text: `Nonton`, url: `https://t.me/${usernameBot}?start=watch_${seriesId}_${episode}_${resolusi}` }],
-                    [{ text: 'Obrolan SVIP', url: config.OBROLAN }]
+                    [{ text: 'Obrolan SVIP', url: config.OBROLAN }],
+                    [{ text: `Nonton`, url: `https://t.me/${usernameBot}?start=watch_${seriesId}_${episode}_${resolusi}` }]
                 ]
             } });
         }
