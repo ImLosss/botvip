@@ -9,6 +9,7 @@ const { setBot } = require('function/botInstance');
 // Ganti token ini dengan token bot Anda
 let config = readJSONFileSync('./config.json');
 config.RECEIVE_MESSAGE = false;
+writeJSONFileSync('./config.json', config);
 
 // Buat instance bot
 const bot = new TelegramBot(config.TOKEN_TELEGRAM, { polling: false });
