@@ -8,7 +8,7 @@ async function helpAdmin(bot, msg) {
 /series update <series_id> - Update series information
 /series episode <series_id> - Add a new episode to a series
 /series delepisode <series_id> - Delete an episode from a series
-/series search <search_term> - Search for series by title
+/series search <title> - Search for series by title
 
 💎 **VIP & Akun**
 /vipcode - Generate a VIP code
