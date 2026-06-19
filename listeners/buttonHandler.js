@@ -17,8 +17,6 @@ module.exports = (function() {
             let data;
             let config = readJSONFileSync(`./config.json`);
 
-            console.log(config.RECEIVE_MESSAGE, "Receive Message Status");
-
             if(!config.RECEIVE_MESSAGE) return console.log("Skip Callback Query.");
             try {
                 data = JSON.parse(query.data);
