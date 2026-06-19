@@ -114,6 +114,8 @@ async function newEpisode(bot, msg, value, config) {
     const usernameBot = await bot.getMe().then(me => me.username).catch(() => null);
     if (!usernameBot) return bot.sendMessage(msg.chat.id, 'Gagal mendapatkan informasi bot. Silakan coba lagi nanti.');
 
+    bot.sendVideo(config.DB_ID, videoFileId).catch(() => console.log('Gagal menyimpan video ke database'));
+
     let isNew = seriesData[seriesId].episodes[episode] ? false : true;
     if (isNew) {
         seriesData[seriesId].episodes[episode] = [];
