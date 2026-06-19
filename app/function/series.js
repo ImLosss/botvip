@@ -4,7 +4,7 @@ const { getMessageInput } = require('service/messageInputService');
 const { getChoiceInput } = require('service/choiceInputService');
 
 async function seriesHandler(bot, msg, value, config) {
-    if(!value) return bot.sendMessage(msg.chat.id, 'Command salah. Format: /series <add|update|delete|delepisode|search>');
+    if(!value) return bot.sendMessage(msg.chat.id, 'Command salah. Format: /series <add|update|delete|episode|delepisode|search>');
 
     if(value === 'add') newSeries(bot, msg, config);
     if(value.startsWith('search')) search(bot, msg, value, config);
@@ -96,7 +96,7 @@ async function newEpisode(bot, msg, value, config) {
     let videoFileId = msg.video ? msg.video.file_id : (msg.reply_to_message?.video?.file_id || null);
     if (!videoFileId) return bot.sendMessage(msg.chat.id, 'Kirim video episode baru atau reply video sambil mengirimkan cmd ini!');
     const seriesId = value.split(' ')[1];
-    if (!seriesId) return bot.sendMessage(msg.chat.id, 'Masukkan ID series untuk menambahkan episode baru. Format: /episode <id_series>');
+    if (!seriesId) return bot.sendMessage(msg.chat.id, 'Masukkan ID series untuk menambahkan episode baru. Format: /series episode <id_series>');
     const seriesData = readJSONFileSync('./database/series.json');
     if (!seriesData[seriesId]) return bot.sendMessage(msg.chat.id, 'Series dengan ID tersebut tidak ditemukan.');
     let confirm = await getChoiceInput(bot, msg.chat.id, `Apakah Anda ingin menambahkan episode baru untuk series <b>${seriesData[seriesId].title}</b>?`, ['Ya', 'Tidak']).catch(() => null);

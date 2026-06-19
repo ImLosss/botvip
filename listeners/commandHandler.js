@@ -5,7 +5,8 @@ const cmd = require('service/commandImport')
 
 const prefixFunctionsAdmin = {
     'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value, config)),
-    'vipcode': withErrorHandling((bot, msg, value, config, fromId) => cmd.vipCode(bot, msg))
+    'vipcode': withErrorHandling((bot, msg, value, config, fromId) => cmd.vipCode(bot, msg)),
+    'help': withErrorHandling((bot, msg, value, config, fromId) => cmd.helpAdmin(bot, msg)),
 }
 
 const prefixFunctions = {
