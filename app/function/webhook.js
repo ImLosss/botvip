@@ -4,6 +4,7 @@ const console = require('console');
 const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
 
 module.exports = function(bot) {
+  let config = readJSONFileSync('./config.json');
   const server = http.createServer((req, res) => {
     if (req.method === 'POST') {
       let body = '';
@@ -20,7 +21,7 @@ module.exports = function(bot) {
               const order_id = data.order_id;
 
               let vipData = readJSONFileSync('database/vip_users.json');
-              const config = readJSONFileSync('./config.json');
+              let config = readJSONFileSync('./config.json');
               let chatId = Object.keys(vipData).find(id => vipData[id].order_id === order_id);
               if(!chatId) return console.log(`No matching chatId found for order_id: ${order_id}`);
 
