@@ -14,6 +14,8 @@ async function helpAdmin(bot, msg) {
 /vipcode - Generate a VIP code
 /claimvip <vip_code> - Claim a VIP code`
 
+return bot.sendMessage(msg.chat.id, helpText, { parse_mode: 'Markdown' });
+
 }
 
 module.exports = { helpAdmin };
