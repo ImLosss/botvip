@@ -9,7 +9,7 @@ async function statusVip(bot, msg, config) {
     if (!vipData[chatId] || !isVip(vipData[chatId].vip_until)) { 
         let message = `Status VIP kamu saat ini: <b>Belum VIP</b>.\n\nIngin beli VIP?`;
         if (vipData[chatId].vip_until) message = `VIP kamu telah kadaluarsa pada:\n<b>${vipData[chatId].vip_until}</b>.\n\nIngin beli VIP?`;
-        bot.sendMessage(chatId, message, { reply_markup: {
+        bot.sendMessage(chatId, message, { parse_mode: 'HTML', reply_markup: {
             inline_keyboard: [
                 [{ text: 'Langganan VIP', callback_data: JSON.stringify({ function: '08' }) }],
             ]
