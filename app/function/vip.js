@@ -7,7 +7,9 @@ async function statusVip(bot, msg, config) {
     let vipData = readJSONFileSync('database/vip_users.json');
     let chatId = msg.chat.id;
     if (!vipData[chatId] || !isVip(vipData[chatId].vip_until)) { 
-        bot.sendMessage(chatId, 'Status kamu saat ini belum VIP.\n\nIngin beli VIP?', { reply_markup: {
+        let message = `Status VIP kamu saat ini: <b>Belum VIP</b>.\n\nIngin beli VIP?`;
+        if (vipData[chatId].vip_until) message = `VIP kamu telah kadaluarsa pada:\n<b>${vipData[chatId].vip_until}</b>.\n\nIngin beli VIP?`;
+        bot.sendMessage(chatId, message, { reply_markup: {
             inline_keyboard: [
                 [{ text: 'Langganan VIP', callback_data: JSON.stringify({ function: '08' }) }],
             ]
