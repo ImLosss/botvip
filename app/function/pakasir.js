@@ -20,8 +20,6 @@ async function createQrisTransactionPakasir(project, orderId, amount) {
             responseType: 'json',
         });
 
-        console.log('Transaksi berhasil dibuat:');
-        console.log(response.body);
         return response.body;
 
     } catch (error) {
@@ -85,9 +83,7 @@ async function getTransactionDetailPakasir(orderId, amount) {
             },
             responseType: 'json' // Otomatis parse response body ke object JSON
         });
-
-        console.log('Detail transaksi berhasil diambil:');
-        console.log(response.body);
+        
         return response.body;
 
     } catch (error) {
