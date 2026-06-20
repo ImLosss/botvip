@@ -102,9 +102,11 @@ async function newEpisode(bot, msg, value, config) {
     let confirm = await getChoiceInput(bot, msg.chat.id, `Apakah Anda ingin menambahkan episode baru untuk series <b>${seriesData[seriesId].title}</b>?`, ['Ya', 'Tidak']).catch(() => null);
     if (!confirm || confirm === 'Tidak') return bot.sendMessage(msg.chat.id, 'Penambahan episode dibatalkan.');
 
-    let episode = await getMessageInput(bot, msg.chat.id, msg.from.id, 'Masukkan episode:').catch(() => null);
-    if (!episode.text) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka untuk episode.');
+    let episode = await getMessageInput(bot, msg.chat.id, msg.from.id, 'Masukkan episode:').catch((err) => { return err.message });
+    if(!episode) return bot.sendMessage(msg.chat.id, episode);
     episode = episode.text.trim();
+
+    if(Number.isNaN(Number(episode))) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka untuk episode.');
 
     let resolusi = await getChoiceInput(bot, msg.chat.id, 'Pilih resolusi video:', ['480p', '720p', '1080p', '4K']).catch(() => null);
     if (!resolusi) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap pilih resolusi video.');
