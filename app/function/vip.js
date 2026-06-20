@@ -65,6 +65,8 @@ async function claimVip(bot, msg, code, config) {
     let vipData = readJSONFileSync('database/vip_users.json');
     let chatId = msg.chat.id;
 
+    if (!code) return bot.sendMessage(chatId, 'Harap sertakan code VIP yang ingin diklaim. Contoh: /claimvip ABCD1234');
+
     const codeIndex = vipCodes.findIndex(vipCode => vipCode.code === code);
     if (codeIndex === -1) return bot.sendMessage(chatId, 'Code VIP tidak valid atau sudah digunakan.');
 
