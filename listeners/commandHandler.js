@@ -23,7 +23,8 @@ const prefixFunctionsStart = {
 const prefixFunctionsDB = {
     'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value, config)),
     'vipcode': withErrorHandling((bot, msg, value, config, fromId) => cmd.vipCode(bot, msg)),
-    'help': withErrorHandling((bot, msg, value, config, fromId) => cmd.helpAdmin(bot, msg))
+    'help': withErrorHandling((bot, msg, value, config, fromId) => cmd.helpAdmin(bot, msg)),
+    'backup': withErrorHandling((bot, msg, value, config, fromId) => cmd.backup(bot, msg))
 }
 
 module.exports = (function() {
