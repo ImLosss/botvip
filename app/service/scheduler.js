@@ -1,8 +1,6 @@
 require('module-alias/register');
 const schedule = require('node-schedule');
-const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
 const console = require('console');
-const { checkUpdateIq } = require('function/autoIq');
 const { backup_database } = require('function/function');
 
 module.exports = function(bot, config) {

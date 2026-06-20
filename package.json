@@ -9,6 +9,7 @@
     "express": "^5.1.0",
     "got": "^14.6.6",
     "module-alias": "^2.2.3",
+    "node-schedule": "^2.1.1",
     "moment-timezone": "^0.5.45",
     "node-cache": "^5.1.2",
     "node-telegram-bot-api": "^0.66.0",
