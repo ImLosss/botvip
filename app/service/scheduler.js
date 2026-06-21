@@ -5,9 +5,9 @@ const { backup_database } = require('function/backup');
 
 module.exports = function(bot, config) {
     schedule.scheduleJob(
-        { hour: 0, minute: 25, tz: 'Asia/Makassar' },
+        { hour: 0, minute: 35, tz: 'Asia/Makassar' },
         async () => {
-            console.log('scheduler 00:01 running...')
+            console.log('scheduler 00:35 running...')
             const backupPath = await backup_database();
             bot.sendDocument(config.DB_ID, backupPath, { caption: 'Backup database' });
         }
