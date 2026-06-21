@@ -96,7 +96,7 @@ async function newEpisode(bot, msg, value, config) {
     let videoFileId = msg.video ? msg.video.file_id : (msg.reply_to_message?.video?.file_id || null);
     let isDoc = false;
     if ((msg.document && msg.document.mime_type.startsWith('video/')) || (msg.reply_to_message?.document?.mime_type?.startsWith('video/'))) {
-        videoFileId = msg.document.file_id || msg.reply_to_message.document.file_id;
+        videoFileId = msg.document?.file_id || msg.reply_to_message?.document?.file_id;
         isDoc = true;
     }
     if (!videoFileId) return bot.sendMessage(msg.chat.id, 'Kirim video episode baru atau reply video sambil mengirimkan cmd ini!');
