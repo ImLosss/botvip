@@ -95,7 +95,7 @@ async function updateSeries(bot, msg, value, config) {
 async function newEpisode(bot, msg, value, config) {
     let videoFileId = msg.video ? msg.video.file_id : (msg.reply_to_message?.video?.file_id || null);
     let isDoc = false;
-    if (msg.document && msg.document.mime_type.startsWith('video/') && msg.reply_to_message?.document?.mime_type?.startsWith('video/')) {
+    if ((msg.document && msg.document.mime_type.startsWith('video/')) || (msg.reply_to_message?.document?.mime_type?.startsWith('video/'))) {
         videoFileId = msg.document.file_id || msg.reply_to_message.document.file_id;
         isDoc = true;
     }
