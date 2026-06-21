@@ -37,6 +37,7 @@ async function buyVip(bot, msg) {
             [{ text: `1 Bulan - Rp ${config.PRICE_MONTH.toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 1 }) }],
             [{ text: `2 Bulan - Rp ${(config.PRICE_MONTH * 2).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 2 }) }],
             [{ text: `5 Bulan - Rp ${(config.PRICE_MONTH * 5).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 5 }) }],
+            [{ text: `8 Bulan - Rp ${(config.PRICE_MONTH * 8).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 8 }) }],
             [{ text: `10 Bulan - Rp ${(config.PRICE_MONTH * 10).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 10 }) }],
             [{ text: `12 Bulan - Rp ${(config.PRICE_MONTH * 12).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 12 }) }],
         ]
