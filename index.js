@@ -24,7 +24,7 @@ setTimeout(() => {
 }, 5000);
 
 require("function/webhook.js")(bot);
-// require("service/scheduler.js")(bot, config);
+require("service/scheduler.js")(bot, config);
 
 if(!fs.existsSync('./app/logs/log.json')) writeJSONFileSync('./app/logs/log.json', []);
 
