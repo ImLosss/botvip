@@ -1,7 +1,7 @@
 require('module-alias/register');
 const schedule = require('node-schedule');
 const console = require('console');
-const { backup_database } = require('function/function');
+const { backup_database } = require('function/backup');
 
 module.exports = function(bot, config) {
     schedule.scheduleJob(
