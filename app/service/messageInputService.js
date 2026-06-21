@@ -7,7 +7,7 @@ function getMessageInput(bot, chatId, userId, textPrompt) {
     let finished = false;
 
     const onMessage = (msg) => {
-      if (msg.chat.id !== chatId || msg.from.id !== userId) return;
+      if (msg.from.id !== userId) return;
 
       cleanup();
       resolve(msg);

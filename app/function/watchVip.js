@@ -92,7 +92,19 @@ async function watchVip(bot, msg, value, config) {
 
     keyboard.push([{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL.replace('@', '')}` }]);
 
-    bot.sendVideo(msg.chat.id, videoData.file_id, { caption: `✨*VIP CONTENT*✨\n\n${series[id].title} Episode ${episode} ${videoData.resolusi} Subtitle Indonesia`, parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } });
+    if(videoData.isDoc) {
+        bot.sendDocument(msg.chat.id, videoData.file_id, { caption: `✨*VIP CONTENT*✨\n\n${series[id].title} Episode ${episode} ${videoData.resolusi} Subtitle Indonesia`, parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } })
+        .catch((err) => {
+            console.log(err);
+            bot.sendMessage(msg.chat.id, `Terjadi kesalahan saat mengirim video. Silakan coba lagi nanti.`);
+        });
+    } else {
+        bot.sendVideo(msg.chat.id, videoData.file_id, { caption: `✨*VIP CONTENT*✨\n\n${series[id].title} Episode ${episode} ${videoData.resolusi} Subtitle Indonesia`, parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } })
+        .catch((err) => {
+            console.log(err);
+            bot.sendMessage(msg.chat.id, `Terjadi kesalahan saat mengirim video. Silakan coba lagi nanti.`);
+        });
+    }
 }
 
 module.exports = {

@@ -94,6 +94,11 @@ async function updateSeries(bot, msg, value, config) {
 
 async function newEpisode(bot, msg, value, config) {
     let videoFileId = msg.video ? msg.video.file_id : (msg.reply_to_message?.video?.file_id || null);
+    let isDoc = false;
+    if (msg.document && msg.document.mime_type.startsWith('video/') && msg.reply_to_message?.document?.mime_type?.startsWith('video/')) {
+        videoFileId = msg.document.file_id || msg.reply_to_message.document.file_id;
+        isDoc = true;
+    }
     if (!videoFileId) return bot.sendMessage(msg.chat.id, 'Kirim video episode baru atau reply video sambil mengirimkan cmd ini!');
     const seriesId = value.split(' ')[1];
     if (!seriesId) return bot.sendMessage(msg.chat.id, 'Masukkan ID series untuk menambahkan episode baru. Format: /series episode <id_series>');
@@ -104,6 +109,7 @@ async function newEpisode(bot, msg, value, config) {
 
     let episode = await getMessageInput(bot, msg.chat.id, msg.from.id, 'Masukkan episode:').catch((err) => { return err.message });
     if(!episode) return bot.sendMessage(msg.chat.id, episode);
+    if(!episode.text || isNaN(episode.text)) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka untuk episode.');
     episode = episode.text.trim();
 
     if(Number.isNaN(Number(episode))) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka untuk episode.');
@@ -132,7 +138,7 @@ async function newEpisode(bot, msg, value, config) {
         }
     }
 
-    seriesData[seriesId].episodes[episode].push({ resolusi, file_id: videoFileId });
+    seriesData[seriesId].episodes[episode].push({ resolusi, file_id: videoFileId, isDoc });
     writeJSONFileSync('./database/series.json', seriesData);
     bot.sendMessage(msg.chat.id, `Episode ${episode} dengan resolusi ${resolusi} berhasil ditambahkan ke series <b>${seriesData[seriesId].title}</b>.`, { parse_mode: 'HTML' });
 }
