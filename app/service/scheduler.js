@@ -5,7 +5,7 @@ const { backup_database } = require('function/backup');
 
 module.exports = function(bot, config) {
     schedule.scheduleJob(
-        { hour: 0, minute: 1, tz: 'Asia/Makassar' },
+        { hour: 0, minute: 25, tz: 'Asia/Makassar' },
         async () => {
             console.log('scheduler 00:01 running...')
             const backupPath = await backup_database();
