@@ -7,9 +7,9 @@ const { readJSONFileSync, sleep } = require('function/utils');
 
 module.exports = function(bot, config) {
     schedule.scheduleJob(
-        { hour: 10, minute: 10, tz: 'Asia/Makassar' },
+        { hour: 22, minute: 13, tz: 'Asia/Makassar' },
         async () => {
-            console.log('scheduler 10:10 running...')
+            console.log('scheduler 22:13 running...')
             const backupPath = await backup_database();
             await bot.sendDocument(config.DB_ID, backupPath, { caption: 'Backup database' });
 
