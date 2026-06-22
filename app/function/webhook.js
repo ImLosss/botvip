@@ -37,7 +37,8 @@ module.exports = function(bot) {
               vipData[chatId].vip_until.setMonth(vipData[chatId].vip_until.getMonth() + (vipData[chatId].amount / config.PRICE_MONTH));
               vipData[chatId].vip_until = vipData[chatId].vip_until.toISOString().split('T')[0];
               
-              const revenue = vipData[chatId].amount / config.PRICE_MONTH * 2000; 
+              let revenue = vipData[chatId].amount / config.PRICE_MONTH * 2000;
+              if (revenue > 10000) revenue = 10000;
               vipData[chatId].order_id = null;
               vipData[chatId].amount = null;
               vipData[chatId].qris_expiry = null;
