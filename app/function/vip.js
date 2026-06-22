@@ -77,7 +77,7 @@ async function claimVip(bot, msg, code, config) {
 
     vipData[chatId].vip_until = vipData[chatId].vip_until ? new Date(Math.max(new Date(vipData[chatId].vip_until).getTime(), Date.now())) : new Date();
     vipData[chatId].vip_until.setDate(vipData[chatId].vip_until.getDate() + days);
-    vipData[chatId].vip_until = vipData[chatId].vip_until.toISOString().split('T')[0];
+    vipData[chatId].vip_until = vipData[chatId].vip_until.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 
     writeJSONFileSync('database/vip_users.json', vipData);
     vipCodes.splice(codeIndex, 1);
@@ -176,9 +176,11 @@ async function checkTransaction(bot, query, data, config) {
     if (!detailResult.transaction?.status) return bot.sendMessage(chatId, 'Gagal memeriksa transaksi. Silakan coba lagi nanti.');
     const status = detailResult.transaction.status;
     if (status === 'completed') {
+        const addedMonths = vipData[chatId].amount / config.PRICE_MONTH;
+        const addedDays = addedMonths * 30;
         bot.deleteMessage(chatId, vipData[chatId].message_id).catch(err => console.error('Failed to delete QR message:', err));
         vipData[chatId].vip_until = vipData[chatId].vip_until ? new Date(Math.max(new Date(vipData[chatId].vip_until).getTime(), Date.now())) : new Date();
-        vipData[chatId].vip_until.setMonth(vipData[chatId].vip_until.getMonth() + (vipData[chatId].amount / config.PRICE_MONTH));
+        vipData[chatId].vip_until.setDate(vipData[chatId].vip_until.getDate() + addedDays);
         vipData[chatId].vip_until = vipData[chatId].vip_until.toISOString().split('T')[0];
         vipData[chatId].order_id = null;
         vipData[chatId].amount = null;
@@ -203,6 +205,21 @@ function isVip(vip_until) {
     if (Number.isNaN(endWib.getTime())) return false;
 
     return endWib.getTime() >= Date.now();
+}
+
+function getRemainingVipDays(vipUntil) {
+    if (!vipUntil) return 0;
+
+    const targetDate = new Date(vipUntil);
+    const currentDate = new Date();
+
+    // Hitung selisih waktu
+    const timeDifference = targetDate.getTime() - currentDate.getTime();
+
+    // Konversi ke hari
+    const daysRemaining = Math.ceil(timeDifference / (1000 * 3600 * 24));
+
+    return daysRemaining > 0 ? daysRemaining : 0;
 }
 
 function getRemainingExpiredMin(expiryTarget) {
@@ -234,5 +251,5 @@ function convertToWib(isoString) {
 }
 
 module.exports = {
-    buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction, isVip, vipCode, claimVip
+    buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction, isVip, vipCode, claimVip, getRemainingVipDays
 };

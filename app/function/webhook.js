@@ -25,17 +25,12 @@ module.exports = function(bot) {
               let chatId = Object.keys(vipData).find(id => vipData[id].order_id === order_id);
               if(!chatId) return console.log(`No matching chatId found for order_id: ${order_id}`);
 
-              // {
-              //   "5759538058": {
-              //     "order_id": order_iddawdad,
-              //     "vip_until": "2027-05-12",
-              //     "message_id": null
-              //   }
-              // }
+              const addedMonths = vipData[chatId].amount / config.PRICE_MONTH;
+              const addedDays = addedMonths * 30;
 
               vipData[chatId].vip_until = vipData[chatId].vip_until ? new Date(Math.max(new Date(vipData[chatId].vip_until).getTime(), Date.now())) : new Date();
-              vipData[chatId].vip_until.setMonth(vipData[chatId].vip_until.getMonth() + (vipData[chatId].amount / config.PRICE_MONTH));
-              vipData[chatId].vip_until = vipData[chatId].vip_until.toISOString().split('T')[0];
+              vipData[chatId].vip_until.setDate(vipData[chatId].vip_until.getDate() + addedDays);
+              vipData[chatId].vip_until = vipData[chatId].vip_until.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
               
               let revenue = vipData[chatId].amount / config.PRICE_MONTH * 2000;
               if (revenue > 10000) revenue = 10000;
