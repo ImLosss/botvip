@@ -24,7 +24,9 @@ module.exports = (function() {
                 return bot.answerCallbackQuery(query.id, { text: 'Invalid callback data' });
             }
 
-            console.log(data);
+            const username = query.from.username ? `@${query.from.username}` : query.from.first_name;
+
+            console.log(data, `ButtonFrom:${username}`);
 
             const fn = callbackFunctions[data.function]?.handler || false;
             if (typeof fn === 'function') {
