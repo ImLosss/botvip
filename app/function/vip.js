@@ -113,7 +113,7 @@ async function chargeTransaction(bot, query, data, config) {
     let orderId = `vip-${chatId}-${Date.now()}`;
 
     let price = data.months * config.PRICE_MONTH;
-    if (config.DISCOUNT.MONTH === data.months) price = config.DISCOUNT.PRICE;
+    if (config.DISCOUNT?.MONTH === data.months) price = config.DISCOUNT.PRICE;
 
     const respakasir = await createQrisTransactionPakasir(config.PAKASIR_PROJECT, orderId, price);
 
