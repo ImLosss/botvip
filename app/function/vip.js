@@ -220,6 +220,7 @@ async function setDisc(bot, msg) {
     price = price.text.trim();
 
     const config = readJSONFileSync('./config.json');
+    if (!config.DISCOUNT) config.DISCOUNT = {};
     config.DISCOUNT.MONTH = parseInt(month);
     config.DISCOUNT.PRICE = parseInt(price);
     writeJSONFileSync('./config.json', config);
