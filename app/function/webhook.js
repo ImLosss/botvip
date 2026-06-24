@@ -25,17 +25,17 @@ module.exports = function(bot) {
               let chatId = Object.keys(vipData).find(id => vipData[id].order_id === order_id);
               if(!chatId) return console.log(`No matching chatId found for order_id: ${order_id}`);
 
-              const addedMonths = vipData[chatId].amount / config.PRICE_MONTH;
-              const addedDays = addedMonths * 30;
+              const addedDays = vipData[chatId].month * 30;
 
               vipData[chatId].vip_until = vipData[chatId].vip_until ? new Date(Math.max(new Date(vipData[chatId].vip_until).getTime(), Date.now())) : new Date();
               vipData[chatId].vip_until.setDate(vipData[chatId].vip_until.getDate() + addedDays);
               vipData[chatId].vip_until = vipData[chatId].vip_until.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
               
-              let revenue = vipData[chatId].amount / config.PRICE_MONTH * 2000;
+              let revenue = vipData[chatId].month * 2000;
               if (revenue > 10000) revenue = 10000;
               vipData[chatId].order_id = null;
               vipData[chatId].amount = null;
+              vipData[chatId].month = null;
               vipData[chatId].qris_expiry = null;
 
               bot.deleteMessage(chatId, vipData[chatId].message_id).catch(err => console.error('Failed to delete message:', err.message))
@@ -49,7 +49,7 @@ module.exports = function(bot) {
 
               bot.sendMessage(chatId, `Pembayaran dengan Order ID: <code>${data.order_id}</code> telah berhasil diproses.\n\nVIP kamu aktif hingga: <b>${vipData[chatId].vip_until}.</b>\n\nKirim /status untuk cek status VIP kamu.\n\nTerima kasih telah melakukan pembayaran! 🙏`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [ [{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL.replace('@', '')}` }] ] } }).catch(err => console.error('Failed to send success message:', err.message));
               bot.sendMessage('5759538058', `anda mendapatkan komisi sebesar Rp ${revenue} dari pembayaran VIP user dengan order_id: <code>${data.order_id}</code>.\n\nTotal revenue: Rp ${config.REVENUE}`, { parse_mode: 'HTML' }).catch(err => console.error('Failed to send commission message:', err.message));
-              bot.sendMessage(config.OWNER_ID, `Pembayaran VIP berhasil diproses untuk user ${chatId} sebesar ${data.amount} dengan order_id: <code>${data.order_id}</code>.\n\nVIP aktif hingga: <b>${vipData[chatId].vip_until}</b>`, { parse_mode: 'HTML' }).catch(err => console.error('Failed to send owner message:', err.message));
+              bot.sendMessage(config.OWNER_ID, `Pembayaran VIP berhasil diproses untuk user ${chatId} selama ${vipData[chatId].month} bulan sebesar ${data.amount} dengan order_id: <code>${data.order_id}</code>.\n\nVIP aktif hingga: <b>${vipData[chatId].vip_until}</b>`, { parse_mode: 'HTML' }).catch(err => console.error('Failed to send owner message:', err.message));
             }
           }
         } catch (e) {

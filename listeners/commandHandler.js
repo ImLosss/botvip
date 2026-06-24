@@ -7,6 +7,7 @@ const prefixFunctionsAdmin = {
     'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value, config)),
     'vipcode': withErrorHandling((bot, msg, value, config, fromId) => cmd.vipCode(bot, msg)),
     'help': withErrorHandling((bot, msg, value, config, fromId) => cmd.helpAdmin(bot, msg)),
+    'setdisc': withErrorHandling((bot, msg, value, config, fromId) => cmd.setDisc(bot, msg)),
 }
 
 const prefixFunctions = {
@@ -24,7 +25,8 @@ const prefixFunctionsDB = {
     'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.seriesHandler(bot, msg, value, config)),
     'vipcode': withErrorHandling((bot, msg, value, config, fromId) => cmd.vipCode(bot, msg)),
     'help': withErrorHandling((bot, msg, value, config, fromId) => cmd.helpAdmin(bot, msg)),
-    'backup': withErrorHandling((bot, msg, value, config, fromId) => cmd.backup(bot, msg))
+    'backup': withErrorHandling((bot, msg, value, config, fromId) => cmd.backup(bot, msg)),
+    'setdisc': withErrorHandling((bot, msg, value, config, fromId) => cmd.setDisc(bot, msg)),
 }
 
 module.exports = (function() {

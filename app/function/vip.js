@@ -32,15 +32,20 @@ async function buyVip(bot, msg) {
 
     const chatId = msg.chat?.id ?? msg.message?.chat?.id;
 
+    let months = [1, 2, 5, 8, 10, 12];
+    let buttons = months.map(month => {
+        const hargaNormal = `Rp ${(config.PRICE_MONTH * month).toLocaleString('id-ID')}`;
+
+        return [{
+            text: config.DISCOUNT.MONTH === month 
+                ? `🔥 ${month} Bulan - ${hargaNormal.split('').join('\u0336') + '\u0336'} Rp ${config.DISCOUNT.PRICE.toLocaleString('id-ID')}` 
+                : `${month} Bulan - ${hargaNormal}`,
+            callback_data: JSON.stringify({ function: '07', months: month })
+        }];
+    });
+
     bot.sendMessage(chatId, 'Ingin langganan vip berapa bulan?', { reply_markup: {
-        inline_keyboard: [
-            [{ text: `1 Bulan - Rp ${config.PRICE_MONTH.toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 1 }) }],
-            [{ text: `2 Bulan - Rp ${(config.PRICE_MONTH * 2).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 2 }) }],
-            [{ text: `5 Bulan - Rp ${(config.PRICE_MONTH * 5).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 5 }) }],
-            [{ text: `8 Bulan - Rp ${(config.PRICE_MONTH * 8).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 8 }) }],
-            [{ text: `10 Bulan - Rp ${(config.PRICE_MONTH * 10).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 10 }) }],
-            [{ text: `12 Bulan - Rp ${(config.PRICE_MONTH * 12).toLocaleString('id-ID')}`, callback_data: JSON.stringify({ function: '07', months: 12 }) }],
-        ]
+        inline_keyboard: buttons
     } });
 }
 
@@ -107,7 +112,10 @@ async function chargeTransaction(bot, query, data, config) {
 
     let orderId = `vip-${chatId}-${Date.now()}`;
 
-    const respakasir = await createQrisTransactionPakasir(config.PAKASIR_PROJECT, orderId, data.months * config.PRICE_MONTH);
+    let price = data.months * config.PRICE_MONTH;
+    if (config.DISCOUNT.MONTH === data.months) price = config.DISCOUNT.PRICE;
+
+    const respakasir = await createQrisTransactionPakasir(config.PAKASIR_PROJECT, orderId, price);
 
     const expMins = getRemainingExpiredMin(respakasir.payment.expired_at);
 
@@ -138,6 +146,7 @@ async function chargeTransaction(bot, query, data, config) {
     }).then((result) => {
         vipData[chatId].order_id = respakasir.payment.order_id;
         vipData[chatId].amount = respakasir.payment.amount;
+        vipData[chatId].month = data.months;
         vipData[chatId].message_id = result.message_id;
         vipData[chatId].qris_expiry = new Date(Date.now() + expMins * 60000).toISOString();
         writeJSONFileSync('database/vip_users.json', vipData);
@@ -152,6 +161,7 @@ async function cancelTransaction(bot, query) {
     vipData[chatId].qris_expiry = null;
     vipData[chatId].order_id = null;
     vipData[chatId].amount = null;
+    vipData[chatId].month = null;
     vipData[chatId].message_id = null;
     writeJSONFileSync('database/vip_users.json', vipData);
 
@@ -196,6 +206,24 @@ async function checkTransaction(bot, query, data, config) {
             ]
         } });
     }
+}
+
+async function setDisc(bot, msg) {
+    let month = await getMessageInput(bot, msg.chat.id, msg.from.id, 'Diskon untuk berapa bulan? (Masukkan angka)').catch((err) => { return { error: true, message: err.message } });
+    if(month.error) return bot.sendMessage(msg.chat.id, month.message);
+    if(!month.text || isNaN(month.text)) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka untuk bulan.');
+    month = month.text.trim();
+    
+    let price = await getMessageInput(bot, msg.chat.id, msg.from.id, 'Harga diskon? (Masukkan angka)').catch(err => { return { error: true, message: err.message } });
+    if(price.error) return bot.sendMessage(msg.chat.id, price.message);
+    if(!price.text || isNaN(price.text)) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan angka untuk harga diskon.');
+    price = price.text.trim();
+
+    const config = readJSONFileSync('./config.json');
+    config.DISCOUNT.MONTH = parseInt(month);
+    config.DISCOUNT.PRICE = parseInt(price);
+    writeJSONFileSync('./config.json', config);
+    bot.sendMessage(msg.chat.id, 'Diskon berhasil diatur.');
 }
 
 function isVip(vip_until) {
@@ -251,5 +279,5 @@ function convertToWib(isoString) {
 }
 
 module.exports = {
-    buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction, isVip, vipCode, claimVip, getRemainingVipDays
+    buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction, isVip, vipCode, claimVip, getRemainingVipDays, setDisc
 };
