@@ -23,6 +23,7 @@ module.exports = function(bot, config) {
                     await sleep(2000); 
                     console.log(`Sending VIP reminder to user ${userId} with ${remainingDays} days remaining.`);
                     await bot.sendMessage(userId, `VIP kamu sisa ${remainingDays} hari lagi\n\nIngin memperpanjang VIP?`, { reply_markup: { inline_keyboard: [ [{ text: 'Perpanjang VIP', callback_data: JSON.stringify({ function: '08' }) }] ] } }).catch(err => console.log('Failed to send VIP reminder message:', err.message));
+                    bot.sendMessage(config.DB_ID, `Sending VIP reminder to user ${userId} with ${remainingDays} days remaining.`).catch(err => console.log('Failed to send VIP reminder log message:', err.message));
                 }
             }
         }
