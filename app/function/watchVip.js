@@ -1,6 +1,7 @@
 require('module-alias/register');
 const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
 const { isVip } = require('function/vip');
+const cache = require('cache');
 
 async function watchVip(bot, msg, value, config) {
     if(!value) return bot.sendMessage(msg.chat.id, 'Terjadi kesalahan, silakan coba lagi nanti.');
@@ -31,7 +32,7 @@ async function watchVip(bot, msg, value, config) {
         return bot.sendMessage(msg.chat.id, `Resolusi ${resolusi} Episode ${episode} ${series[id].title} tidak tersedia, laporkan ke admin agar segera diperbaiki.`);
     }
 
-    const usernameBot = await bot.getMe().then(me => me.username).catch(() => null);
+    const usernameBot = cache.get('bot_username');
     if (!usernameBot) {
         await bot.sendMessage(config.OWNER_ID, `Gagal mendapatkan informasi bot saat user ${msg.chat.id} mencoba menonton VIP dengan ID ${id}.`);
         return bot.sendMessage(msg.chat.id, 'Terjadi kesalahan, coba lagi nanti.');
@@ -51,8 +52,6 @@ async function watchVip(bot, msg, value, config) {
 
     let keyboard = [];
     let navButtons = [];
-
-    console.log(usernameBot);
 
     // Tambahkan tombol "Previous" jika ada
     if (hasPrev) {

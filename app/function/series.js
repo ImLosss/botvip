@@ -2,6 +2,7 @@ require('module-alias/register');
 const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
 const { getMessageInput } = require('service/messageInputService');
 const { getChoiceInput } = require('service/choiceInputService');
+const cache = require('cache');
 
 async function seriesHandler(bot, msg, value, config) {
     if(!value) return bot.sendMessage(msg.chat.id, 'Command salah. Format: /series <add|update|delete|episode|delepisode|search>');
@@ -119,7 +120,7 @@ async function newEpisode(bot, msg, value, config) {
     let notNewRes = seriesData[seriesId].episodes[episode]?.find(item => item.resolusi === resolusi);
     if (notNewRes) return bot.sendMessage(msg.chat.id, `Episode ${episode} dengan resolusi ${resolusi} sudah ada. Gunakan resolusi lain atau update episode yang ada.`);
 
-    const usernameBot = await bot.getMe().then(me => me.username).catch(() => null);
+    const usernameBot = cache.get('bot_username');
     if (!usernameBot) return bot.sendMessage(msg.chat.id, 'Gagal mendapatkan informasi bot. Silakan coba lagi nanti.');
 
     bot.sendVideo(config.DB_ID, videoFileId).catch(() => console.log('Gagal menyimpan video ke database'));

@@ -4,6 +4,7 @@ const console = require('console');
 const { readJSONFileSync, writeJSONFileSync } = require("function/utils");
 const fs = require('fs');
 const { setBot } = require('function/botInstance');
+const cache = require('cache');
 
 
 // Ganti token ini dengan token bot Anda
@@ -15,8 +16,14 @@ writeJSONFileSync('./config.json', config);
 const bot = new TelegramBot(config.TOKEN_TELEGRAM, { polling: false });
 setBot(bot);
 
-setTimeout(() => {
+setTimeout(async () => {
     let config = readJSONFileSync('./config.json');
+    const usernameBot = await bot.getMe().then(me => me.first_name || me.username).catch(() => null);
+    if (!usernameBot) {
+        console.error("Gagal mendapatkan informasi bot.");
+        process.exit(1);
+    }
+    cache.set('bot_username', usernameBot);
     config.RECEIVE_MESSAGE = true;
     writeJSONFileSync('./config.json', config);
     console.log("Bot aktif dan hanya menerima pesan baru.");
