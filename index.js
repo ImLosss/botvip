@@ -18,7 +18,7 @@ setBot(bot);
 
 setTimeout(async () => {
     let config = readJSONFileSync('./config.json');
-    const usernameBot = await bot.getMe().then(me => me.first_name || me.username).catch(() => null);
+    const usernameBot = await bot.getMe().then(me => me.username).catch(() => null);
     if (!usernameBot) {
         console.error("Gagal mendapatkan informasi bot.");
         process.exit(1);
