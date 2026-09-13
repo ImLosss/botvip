@@ -13,7 +13,8 @@ async function helpAdmin(bot, msg) {
 💎 <b>VIP & Akun</b>
 <code>/vipcode</code> - Generate a VIP code
 <code>/claimvip [vip_code]</code> - Claim a VIP code
-<code>/setdisc</code> - Set discount for VIP users`;
+<code>/setdisc</code> - Set discount for VIP users
+<code>/setmonths</code> - Set allowed months for VIP purchase`;
 
     return bot.sendMessage(msg.chat.id, helpText, { parse_mode: 'HTML' });
 }
