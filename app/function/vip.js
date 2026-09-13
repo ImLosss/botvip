@@ -32,7 +32,7 @@ async function buyVip(bot, msg) {
 
     const chatId = msg.chat?.id ?? msg.message?.chat?.id;
 
-    let months = [1, 2, 5, 8, 10, 12];
+    let months = config.MONTHS || [1, 2, 5, 8, 10, 12];
     let buttons = months.map(month => {
         const hargaNormal = `Rp ${(config.PRICE_MONTH * month).toLocaleString('id-ID')}`;
 
@@ -227,6 +227,20 @@ async function setDisc(bot, msg) {
     bot.sendMessage(msg.chat.id, 'Diskon berhasil diatur.');
 }
 
+async function setMonths(bot, msg, config) {
+    let monthsInput = await getMessageInput(bot, msg.chat.id, msg.from.id, `Masukkan daftar bulan untuk pembelian VIP (pisahkan dengan koma, misal: 1,2,5,8,10,12)\n\nData sekarang: ${config.MONTHS?.join(', ') || 'Tidak ada'}`).catch((err) => { return { error: true, message: err.message } });
+    if(monthsInput.error) return bot.sendMessage(msg.chat.id, monthsInput.message);
+    if(!monthsInput.text) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan daftar bulan yang diperbolehkan.');
+
+    const months = monthsInput.text.split(',').map(m => m.trim()).filter(m => !isNaN(m)).map(m => parseInt(m));
+
+    if (months.length === 0) return bot.sendMessage(msg.chat.id, 'Input tidak valid. Harap masukkan daftar bulan yang valid.');
+
+    config.MONTHS = months;
+    writeJSONFileSync('./config.json', config);
+    bot.sendMessage(msg.chat.id, 'Daftar bulan berhasil diatur.');
+}
+
 function isVip(vip_until) {
     if (!vip_until) return false;
 
@@ -280,5 +294,5 @@ function convertToWib(isoString) {
 }
 
 module.exports = {
-    buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction, isVip, vipCode, claimVip, getRemainingVipDays, setDisc
+    setMonths, buyVip, chargeTransaction, statusVip, cancelTransaction, checkTransaction, isVip, vipCode, claimVip, getRemainingVipDays, setDisc
 };
