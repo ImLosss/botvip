@@ -6,7 +6,10 @@ const cache = require('cache');
 async function watchVip(bot, msg, value, config) {
     if(!value) return bot.sendMessage(msg.chat.id, 'Terjadi kesalahan, silakan coba lagi nanti.');
     const [id, epStr, resStr] = value.split('_');
-    const episode = parseInt(epStr);
+    const episode = epStr?.trim();
+    if (!episode || Number.isNaN(Number(episode))) {
+        return bot.sendMessage(msg.chat.id, 'Episode tidak valid, silakan coba lagi nanti.');
+    }
     const resolusi = resStr || '1080p';
 
     let vipUsers = readJSONFileSync('database/vip_users.json');
@@ -39,8 +42,7 @@ async function watchVip(bot, msg, value, config) {
     }
 
     const availableEpisodes = Object.keys(series[id].episodes)
-        .map(Number)
-        .sort((a, b) => a - b);
+        .sort((a, b) => Number(a) - Number(b));
 
     const currentIndex = availableEpisodes.indexOf(episode);
 
