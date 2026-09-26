@@ -133,7 +133,7 @@ async function newEpisode(bot, msg, value, config) {
             bot.sendPhoto(config.USERNAME_CHANNEL, seriesData[seriesId].cover, { caption: `✨*UPDATE VIP*✨\n\n${seriesData[seriesId].title} Episode ${episode} Subtitle Indonesia`, parse_mode: 'Markdown', reply_markup: {
                 inline_keyboard: [
                     [{ text: 'Obrolan SVIP', url: config.OBROLAN }],
-                    [{ text: `Nonton`, url: `https://t.me/${usernameBot}?start=watch_${seriesId}_${episode}_${resolusi}` }]
+                    [{ text: `Nonton`, url: `https://t.me/${usernameBot}?start=watch_${seriesId}_${episode.replace(/\./g, '-')}_${resolusi}` }]
                 ]
             } });
         }

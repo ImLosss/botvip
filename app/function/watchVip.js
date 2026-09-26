@@ -6,7 +6,7 @@ const cache = require('cache');
 async function watchVip(bot, msg, value, config) {
     if(!value) return bot.sendMessage(msg.chat.id, 'Terjadi kesalahan, silakan coba lagi nanti.');
     const [id, epStr, resStr] = value.split('_');
-    const episode = epStr?.trim();
+    const episode = epStr?.trim().replace(/-/g, '.');
     if (!episode || Number.isNaN(Number(episode))) {
         return bot.sendMessage(msg.chat.id, 'Episode tidak valid, silakan coba lagi nanti.');
     }
@@ -59,7 +59,7 @@ async function watchVip(bot, msg, value, config) {
     if (hasPrev) {
         navButtons.push({ 
             text: `« Ep ${prevEpisodeNumber}`, 
-            url: `https://t.me/${usernameBot}?start=watch_${id}_${prevEpisodeNumber}`
+            url: `https://t.me/${usernameBot}?start=watch_${id}_${prevEpisodeNumber.replace(/\./g, '-')}`
         });
     }
 
@@ -67,7 +67,7 @@ async function watchVip(bot, msg, value, config) {
     if (hasNext) {
         navButtons.push({ 
             text: `Ep ${nextEpisodeNumber} »`, 
-            url: `https://t.me/${usernameBot}?start=watch_${id}_${nextEpisodeNumber}`
+            url: `https://t.me/${usernameBot}?start=watch_${id}_${nextEpisodeNumber.replace(/\./g, '-')}`
         });
     }
     
@@ -84,7 +84,7 @@ async function watchVip(bot, msg, value, config) {
 
             navButtons.push({
                 text: `${item.resolusi}`,
-                url: `https://t.me/${usernameBot}?start=watch_${id}_${episode}_${item.resolusi}`
+                url: `https://t.me/${usernameBot}?start=watch_${id}_${episode.replace(/\./g, '-')}_${item.resolusi}`
             });
         }
     });
