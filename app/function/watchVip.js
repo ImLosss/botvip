@@ -3,6 +3,9 @@ const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
 const { isVip } = require('function/vip');
 const cache = require('cache');
 
+const EPISODES_PER_PAGE = 20;
+const SERIES_PER_PAGE = 6;
+
 async function watchVip(bot, msg, value, config) {
     if(!value) return bot.sendMessage(msg.chat.id, 'Terjadi kesalahan, silakan coba lagi nanti.');
     const [id, epStr, resStr] = value.split('_');
@@ -91,6 +94,13 @@ async function watchVip(bot, msg, value, config) {
 
     if (navButtons.length > 0) keyboard.push(navButtons);
 
+    const targetPage = currentIndex !== -1 ? Math.floor(currentIndex / EPISODES_PER_PAGE) + 1 : 1;
+
+    keyboard.push([
+        { text: '🎬 Pilih Episode', callback_data: JSON.stringify({ function: '11', id: String(id), p: targetPage }) },
+        { text: '📚 Semua Series', callback_data: JSON.stringify({ function: '12', p: 1 }) }
+    ]);
+
     keyboard.push([{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL.replace('@', '')}` }]);
 
     if(videoData.isDoc) {
@@ -108,6 +118,248 @@ async function watchVip(bot, msg, value, config) {
     }
 }
 
+function checkVipAccess(bot, chatId) {
+    const vipUsers = readJSONFileSync('database/vip_users.json') || {};
+    if (!vipUsers[chatId] || !isVip(vipUsers[chatId].vip_until)) {
+        bot.sendMessage(chatId, 'Status kamu saat ini belum VIP.\n\nIngin beli VIP?', {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: 'Langganan VIP', callback_data: JSON.stringify({ function: '08' }) }],
+                ]
+            }
+        });
+        return false;
+    }
+    return true;
+}
+
+async function chooseEpisode(bot, chatId, seriesId, page = 1, messageId = null, currentEpisode = null) {
+    if (!checkVipAccess(bot, chatId)) return;
+
+    const series = readJSONFileSync('./database/series.json') || {};
+    const targetSeries = series[seriesId];
+
+    if (!targetSeries) {
+        const text = 'Series tidak ditemukan atau telah dihapus.';
+        if (messageId) {
+            return bot.editMessageText(text, { chat_id: chatId, message_id: messageId }).catch(() => {
+                bot.sendMessage(chatId, text);
+            });
+        }
+        return bot.sendMessage(chatId, text);
+    }
+
+    const availableEpisodes = Object.keys(targetSeries.episodes || {})
+        .sort((a, b) => Number(a) - Number(b));
+
+    if (availableEpisodes.length === 0) {
+        const text = `Series *${targetSeries.title}* belum memiliki episode yang tersedia.`;
+        const keyboard = [[{ text: '📚 Kembali ke Daftar Series', callback_data: JSON.stringify({ function: '12', p: 1 }) }]];
+        if (messageId) {
+            return bot.editMessageText(text, { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } }).catch(() => {
+                bot.sendMessage(chatId, text, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } });
+            });
+        }
+        return bot.sendMessage(chatId, text, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } });
+    }
+
+    const totalPages = Math.ceil(availableEpisodes.length / EPISODES_PER_PAGE) || 1;
+    const currentPage = Math.max(1, Math.min(Number(page) || 1, totalPages));
+    const startIdx = (currentPage - 1) * EPISODES_PER_PAGE;
+    const pageEpisodes = availableEpisodes.slice(startIdx, startIdx + EPISODES_PER_PAGE);
+
+    const COLS = 5;
+    let keyboard = [];
+    let currentRow = [];
+
+    pageEpisodes.forEach(ep => {
+        const isCurrent = currentEpisode && String(currentEpisode) === String(ep);
+        currentRow.push({
+            text: isCurrent ? `▶️ ${ep}` : `${ep}`,
+            callback_data: JSON.stringify({ function: '13', id: String(seriesId), ep: String(ep) })
+        });
+        if (currentRow.length === COLS) {
+            keyboard.push(currentRow);
+            currentRow = [];
+        }
+    });
+    if (currentRow.length > 0) {
+        keyboard.push(currentRow);
+    }
+
+    let navRow = [];
+    if (currentPage > 1) {
+        navRow.push({
+            text: '« Prev',
+            callback_data: JSON.stringify({ function: '11', id: String(seriesId), p: currentPage - 1 })
+        });
+    }
+    navRow.push({
+        text: `${currentPage}/${totalPages}`,
+        callback_data: JSON.stringify({ function: 'noop' })
+    });
+    if (currentPage < totalPages) {
+        navRow.push({
+            text: 'Next »',
+            callback_data: JSON.stringify({ function: '11', id: String(seriesId), p: currentPage + 1 })
+        });
+    }
+    if (totalPages > 1) {
+        keyboard.push(navRow);
+    }
+
+    keyboard.push([
+        { text: '📚 Daftar Series', callback_data: JSON.stringify({ function: '12', p: 1 }) },
+        { text: '❌ Tutup', callback_data: JSON.stringify({ function: '14' }) }
+    ]);
+
+    const text = `🎬 *${targetSeries.title}*\n` +
+        `📺 Total Episode: *${availableEpisodes.length}*\n` +
+        `📄 Halaman: *${currentPage}/${totalPages}*\n\n` +
+        `Pilih episode yang ingin ditonton:`;
+
+    if (messageId) {
+        return bot.editMessageText(text, {
+            chat_id: chatId,
+            message_id: messageId,
+            parse_mode: 'Markdown',
+            reply_markup: { inline_keyboard: keyboard }
+        }).catch(err => {
+            if (err.response?.body?.description?.includes('message is not modified')) return;
+            bot.sendMessage(chatId, text, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } });
+        });
+    } else {
+        return bot.sendMessage(chatId, text, {
+            parse_mode: 'Markdown',
+            reply_markup: { inline_keyboard: keyboard }
+        });
+    }
+}
+
+async function listAllSeries(bot, chatId, page = 1, messageId = null) {
+    if (!checkVipAccess(bot, chatId)) return;
+
+    const series = readJSONFileSync('./database/series.json') || {};
+    const seriesList = Object.entries(series).map(([id, item]) => ({ id, ...item }));
+
+    if (seriesList.length === 0) {
+        const text = 'Saat ini belum ada series yang tersedia.';
+        if (messageId) {
+            return bot.editMessageText(text, { chat_id: chatId, message_id: messageId }).catch(() => {
+                bot.sendMessage(chatId, text);
+            });
+        }
+        return bot.sendMessage(chatId, text);
+    }
+
+    const totalPages = Math.ceil(seriesList.length / SERIES_PER_PAGE) || 1;
+    const currentPage = Math.max(1, Math.min(Number(page) || 1, totalPages));
+    const startIdx = (currentPage - 1) * SERIES_PER_PAGE;
+    const pageSeries = seriesList.slice(startIdx, startIdx + SERIES_PER_PAGE);
+
+    let keyboard = pageSeries.map(item => {
+        const totalEp = Object.keys(item.episodes || {}).length;
+        const displayTitle = item.title.length > 28 ? item.title.substring(0, 25) + '...' : item.title;
+        return [{
+            text: `🎬 ${displayTitle} (${totalEp} Ep)`,
+            callback_data: JSON.stringify({ function: '11', id: String(item.id), p: 1 })
+        }];
+    });
+
+    let navRow = [];
+    if (currentPage > 1) {
+        navRow.push({
+            text: '« Prev',
+            callback_data: JSON.stringify({ function: '12', p: currentPage - 1 })
+        });
+    }
+    navRow.push({
+        text: `${currentPage}/${totalPages}`,
+        callback_data: JSON.stringify({ function: 'noop' })
+    });
+    if (currentPage < totalPages) {
+        navRow.push({
+            text: 'Next »',
+            callback_data: JSON.stringify({ function: '12', p: currentPage + 1 })
+        });
+    }
+    if (totalPages > 1) {
+        keyboard.push(navRow);
+    }
+
+    keyboard.push([{ text: '❌ Tutup', callback_data: JSON.stringify({ function: '14' }) }]);
+
+    const text = `📚 *DAFTAR SERIES VIP*\n` +
+        `📄 Halaman: *${currentPage}/${totalPages}* | Total: *${seriesList.length}* Series\n\n` +
+        `Pilih series yang ingin kamu tonton:`;
+
+    if (messageId) {
+        return bot.editMessageText(text, {
+            chat_id: chatId,
+            message_id: messageId,
+            parse_mode: 'Markdown',
+            reply_markup: { inline_keyboard: keyboard }
+        }).catch(err => {
+            if (err.response?.body?.description?.includes('message is not modified')) return;
+            bot.sendMessage(chatId, text, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } });
+        });
+    } else {
+        return bot.sendMessage(chatId, text, {
+            parse_mode: 'Markdown',
+            reply_markup: { inline_keyboard: keyboard }
+        });
+    }
+}
+
+async function chooseEpisodeCallback(bot, query, data, config) {
+    const chatId = query.message.chat.id;
+    bot.answerCallbackQuery(query.id).catch(() => {});
+
+    const isMediaMessage = Boolean(query.message.video || query.message.document);
+    const messageIdToEdit = isMediaMessage ? null : query.message.message_id;
+
+    return chooseEpisode(bot, chatId, data.id, data.p || 1, messageIdToEdit);
+}
+
+async function listSeriesCallback(bot, query, data, config) {
+    const chatId = query.message.chat.id;
+    bot.answerCallbackQuery(query.id).catch(() => {});
+
+    const isMediaMessage = Boolean(query.message.video || query.message.document);
+    const messageIdToEdit = isMediaMessage ? null : query.message.message_id;
+
+    return listAllSeries(bot, chatId, data.p || 1, messageIdToEdit);
+}
+
+async function watchEpisodeCallback(bot, query, data, config) {
+    bot.answerCallbackQuery(query.id, { text: `Memuat Episode ${data.ep}...` }).catch(() => {});
+    return watchVip(bot, query.message, `${data.id}_${data.ep}`, config);
+}
+
+async function closeMessageCallback(bot, query, data, config) {
+    bot.answerCallbackQuery(query.id, { text: 'Ditutup' }).catch(() => {});
+    bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(() => {});
+}
+
+async function listSeriesUser(bot, msg, value, config) {
+    const page = Number(value) || 1;
+    return listAllSeries(bot, msg.chat.id, page);
+}
+
+async function chooseEpisodeUser(bot, msg, value, config) {
+    const [seriesId, page] = (value || '').split('_');
+    if (!seriesId) return listAllSeries(bot, msg.chat.id, 1);
+    return chooseEpisode(bot, msg.chat.id, seriesId, Number(page) || 1);
+}
+
 module.exports = {
-    watchVip
+    watchVip,
+    chooseEpisode,
+    listAllSeries,
+    chooseEpisodeCallback,
+    listSeriesCallback,
+    watchEpisodeCallback,
+    closeMessageCallback,
+    listSeriesUser,
+    chooseEpisodeUser
 };

@@ -18,6 +18,7 @@ async function statusVip(bot, msg, config) {
         bot.sendMessage(chatId, `VIP kamu aktif hingga: <b>${vipData[chatId].vip_until}</b>.\n\nUID: <code>${chatId}</code>\n\nIngin memperpanjang VIP?`, { parse_mode: 'HTML', reply_markup: {
             inline_keyboard: [
                 [{ text: 'Perpanjang VIP', callback_data: JSON.stringify({ function: '08' }) }],
+                [{ text: '📚 Daftar Series', callback_data: JSON.stringify({ function: '12', p: 1 }) }],
                 [{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL.replace('@', '')}` }],
             ]
         } });

@@ -9,6 +9,11 @@ const callbackFunctions = {
     '08': { handler: cmd.buyVip, delete: true },
     '09': { handler: cmd.cancelTransaction, delete: false },
     '10': { handler: cmd.checkTransaction, delete: false },
+    '11': { handler: cmd.chooseEpisodeCallback, delete: false },
+    '12': { handler: cmd.listSeriesCallback, delete: false },
+    '13': { handler: cmd.watchEpisodeCallback, delete: false },
+    '14': { handler: cmd.closeMessageCallback, delete: true },
+    'noop': { handler: (bot, query) => bot.answerCallbackQuery(query.id).catch(() => {}), delete: false },
 };
 
 module.exports = (function() {

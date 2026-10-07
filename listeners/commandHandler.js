@@ -14,11 +14,15 @@ const prefixFunctions = {
     'buyvip': withErrorHandling((bot, msg, value, config, fromId) => cmd.buyVip(bot, msg, value)),
     'status': withErrorHandling((bot, msg, value, config, fromId) => cmd.statusVip(bot, msg, config)),
     'watch': withErrorHandling((bot, msg, value, config, fromId) => cmd.watchVip(bot, msg, value, config)),
-    'claimvip': withErrorHandling((bot, msg, value, config, fromId) => cmd.claimVip(bot, msg, value, config))
+    'claimvip': withErrorHandling((bot, msg, value, config, fromId) => cmd.claimVip(bot, msg, value, config)),
+    'list': withErrorHandling((bot, msg, value, config, fromId) => cmd.listSeriesUser(bot, msg, value, config)),
+    'serieslist': withErrorHandling((bot, msg, value, config, fromId) => cmd.listSeriesUser(bot, msg, value, config)),
 }
 
 const prefixFunctionsStart = {
-    'watch': withErrorHandling((bot, msg, value, config, fromId) => cmd.watchVip(bot, msg, value, config))
+    'watch': withErrorHandling((bot, msg, value, config, fromId) => cmd.watchVip(bot, msg, value, config)),
+    'series': withErrorHandling((bot, msg, value, config, fromId) => cmd.listSeriesUser(bot, msg, value, config)),
+    'eps': withErrorHandling((bot, msg, value, config, fromId) => cmd.chooseEpisodeUser(bot, msg, value, config))
 }
 
 const prefixFunctionsDB = {
@@ -59,7 +63,12 @@ module.exports = (function() {
                         if(funcName[0].includes('@')) funcName[0] = funcName[0].split('@')[0].toLowerCase();
                         if(msg.chat.type == 'private') {
                             if (prefixFunctionsAdmin[funcName[0]]) {
-                                if(config.OWNER_ID !== msg.chat.id) return;
+                                if(config.OWNER_ID !== msg.chat.id) {
+                                    if (funcName[0] === 'series') {
+                                        return cmd.listSeriesUser(bot, msg, value, config);
+                                    }
+                                    return;
+                                }
                                 return prefixFunctionsAdmin[funcName[0]](bot, msg, value, config, fromId);
                             } else if (prefixFunctions[funcName[0]]) {
                                 return prefixFunctions[funcName[0]](bot, msg, value, config, fromId);
