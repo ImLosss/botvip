@@ -13,17 +13,21 @@ module.exports = function(bot) {
       });
       req.on('end', async () => {
         try {
-          if (req.url === '/pakasir') {
+          if (req.url === '/pakasir' || req.url === '/pakasir-webhook') {
             const data = JSON.parse(body || '{}');
 
             console.log(data, 'webhook payload');
             if(data.status == 'completed') {
               const order_id = data.order_id;
+              const txn_id = data.txn_id;
 
               let vipData = readJSONFileSync('database/vip_users.json');
               let config = readJSONFileSync('./config.json');
-              let chatId = Object.keys(vipData).find(id => vipData[id].order_id === order_id);
-              if(!chatId) return console.log(`No matching chatId found for order_id: ${order_id}`);
+              let chatId = Object.keys(vipData).find(id => {
+                const user = vipData[id];
+                return (order_id && user.order_id === order_id) || (txn_id && user.txn_id === txn_id);
+              });
+              if(!chatId) return console.log(`No matching chatId found for order_id: ${order_id}, txn_id: ${txn_id}`);
 
               let month = vipData[chatId].month;
 
@@ -36,6 +40,7 @@ module.exports = function(bot) {
               let revenue = month * 2000;
               if (revenue > 10000) revenue = 10000;
               vipData[chatId].order_id = null;
+              vipData[chatId].txn_id = null;
               vipData[chatId].amount = null;
               vipData[chatId].month = null;
               vipData[chatId].qris_expiry = null;
@@ -44,8 +49,8 @@ module.exports = function(bot) {
 
               vipData[chatId].message_id = null;
 
-              config.REVENUE += revenue;
-              config.BALANCE += data.amount;
+              config.REVENUE = (config.REVENUE || 0) + revenue;
+              config.BALANCE = (config.BALANCE || 0) + data.amount;
 
               writeJSONFileSync('database/vip_users.json', vipData);
               writeJSONFileSync('./config.json', config);
