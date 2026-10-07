@@ -118,7 +118,7 @@ async function chargeTransaction(bot, query, data, config) {
 
     const respakasir = await createQrisTransactionPakasir(config.PAKASIR_PROJECT, orderId, price);
 
-    const expTarget = respakasir.expired_at || respakasir.payment?.expired_at;
+    const expTarget = respakasir.expires_at || respakasir.expired_at || respakasir.payment?.expired_at || respakasir.payment?.expires_at;
     const qrString = respakasir.qr_string || respakasir.payment?.payment_number;
     const orderIdentifier = respakasir.order_id || respakasir.payment?.order_id || orderId;
     const txnId = respakasir.txn_id || null;
@@ -288,6 +288,8 @@ function getRemainingExpiredMin(expiryTarget) {
     }
 
     const exp = new Date(expDateStr);
+    if (isNaN(exp.getTime())) return 0;
+
     const now = new Date(); 
 
     const mins = Math.ceil((exp - now) / 60000);
@@ -295,7 +297,9 @@ function getRemainingExpiredMin(expiryTarget) {
 }
 
 function convertToWib(isoString) {
+    if (!isoString) return '-';
     const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '-';
     
     // Menggunakan Intl.DateTimeFormat untuk konversi timezone ke Asia/Jakarta (WIB)
     return date.toLocaleTimeString('en-US', {
