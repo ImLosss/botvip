@@ -165,6 +165,7 @@ async function cancelTransaction(bot, query) {
     const transactionId = vipData[chatId]?.txn_id || vipData[chatId]?.order_id;
     if (!transactionId) return bot.sendMessage(chatId, 'Tidak ada transaksi yang sedang berlangsung.');
     const cancelResult = await cancelQrisTransaction(transactionId).catch(err => ({ error: true, message: err.message }));
+    console.log('Cancel Transaction Result:', cancelResult);
     if (cancelResult?.error) return bot.sendMessage(chatId, 'Gagal membatalkan transaksi. Silakan coba lagi nanti.');
 
     bot.sendMessage(chatId, 'Transaksi berhasil dibatalkan. Kamu bisa mencoba membeli VIP lagi jika masih berminat.', { reply_markup: {
