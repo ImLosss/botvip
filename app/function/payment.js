@@ -46,11 +46,13 @@ async function createQrisTransaction(orderId, amount) {
 async function cancelQrisTransaction(orderId) {
   const got = (await import('got')).default;
   const config = readJSONFileSync('config.json');
+
   const url = `${config.PAYMENT_API_URL}/payment/charge-cancel/${encodeURIComponent(orderId)}`;
 
   try {
     const response = await got.post(url, {
       headers: getPaymentHeaders(config),
+      json: {},
       responseType: 'json',
     });
 
