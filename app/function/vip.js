@@ -1,6 +1,6 @@
 require('module-alias/register');
 const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
-const { createQrisTransactionPakasir, cancelTransactionPakasir, getTransactionDetailPakasir } = require('function/pakasir');
+const { createQrisTransaction, cancelQrisTransaction } = require('function/payment');
 const { getMessageInput } = require('service/messageInputService');
 
 async function statusVip(bot, msg, config) {
@@ -116,19 +116,16 @@ async function chargeTransaction(bot, query, data, config) {
     let price = data.months * config.PRICE_MONTH;
     if (config.DISCOUNT?.MONTH === data.months) price = config.DISCOUNT.PRICE;
 
-    const respakasir = await createQrisTransactionPakasir(config.PAKASIR_PROJECT, orderId, price);
-
-    const expTarget = respakasir.expires_at || respakasir.expired_at || respakasir.payment?.expired_at || respakasir.payment?.expires_at;
-    const qrString = respakasir.qr_string || respakasir.payment?.payment_number;
-    const orderIdentifier = respakasir.order_id || respakasir.payment?.order_id || orderId;
-    const txnId = respakasir.txn_id || null;
-    const totalAmount = respakasir.total_payment ?? respakasir.payment?.total_payment ?? price;
-    const paymentAmount = respakasir.amount ?? respakasir.payment?.amount ?? price;
+    const payment = await createQrisTransaction(orderId, price);
+    const expTarget = payment.expiryTime;
+    const orderIdentifier = payment.orderId;
+    const totalAmount = Number(payment.total);
+    if (!payment.qrImageUrl || !orderIdentifier || !expTarget || !Number.isFinite(totalAmount)) {
+        throw new Error('Respons QRIS dari payment API tidak lengkap');
+    }
 
     const expMins = getRemainingExpiredMin(expTarget);
-
-    const encodedQris = encodeURIComponent(qrString);
-    let qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedQris}`;
+    const qrImageUrl = payment.qrImageUrl;
 
     bot.sendPhoto(query.message.chat.id, qrImageUrl, {
         parse_mode: 'HTML',
@@ -152,9 +149,9 @@ async function chargeTransaction(bot, query, data, config) {
             ]
         }
     }).then((result) => {
-        vipData[chatId].order_id = orderIdentifier;
-        vipData[chatId].txn_id = txnId;
-        vipData[chatId].amount = paymentAmount;
+        vipData[chatId].order_id = orderId;
+        vipData[chatId].txn_id = orderIdentifier;
+        vipData[chatId].amount = totalAmount;
         vipData[chatId].month = data.months;
         vipData[chatId].message_id = result.message_id;
         vipData[chatId].qris_expiry = new Date(Date.now() + expMins * 60000).toISOString();
@@ -166,7 +163,8 @@ async function cancelTransaction(bot, query) {
     let chatId = query.message.chat.id;
     let vipData = readJSONFileSync('database/vip_users.json');
     const transactionId = vipData[chatId]?.txn_id || vipData[chatId]?.order_id;
-    const cancelResult = await cancelTransactionPakasir(transactionId).catch(err => ({ error: true, message: err.message }));
+    if (!transactionId) return bot.sendMessage(chatId, 'Tidak ada transaksi yang sedang berlangsung.');
+    const cancelResult = await cancelQrisTransaction(transactionId).catch(err => ({ error: true, message: err.message }));
     if (cancelResult?.error) return bot.sendMessage(chatId, 'Gagal membatalkan transaksi. Silakan coba lagi nanti.');
     vipData[chatId].qris_expiry = null;
     vipData[chatId].order_id = null;
@@ -193,32 +191,7 @@ async function checkTransaction(bot, query, data, config) {
             [{ text: 'Beli VIP', callback_data: JSON.stringify({ function: '08' }) }]
         ]
     } });
-    const transactionId = vipData[chatId].txn_id || vipData[chatId].order_id;
-    const detailResult = await getTransactionDetailPakasir(transactionId).catch(err => ({ error: true, message: err.message }));
-    const status = detailResult?.status || detailResult?.transaction?.status;
-    if (!status) return bot.sendMessage(chatId, 'Gagal memeriksa transaksi. Silakan coba lagi nanti.');
-    if (status === 'completed') {
-        const addedMonths = vipData[chatId].amount / config.PRICE_MONTH;
-        const addedDays = addedMonths * 30;
-        bot.deleteMessage(chatId, vipData[chatId].message_id).catch(err => console.error('Failed to delete QR message:', err));
-        vipData[chatId].vip_until = vipData[chatId].vip_until ? new Date(Math.max(new Date(vipData[chatId].vip_until).getTime(), Date.now())) : new Date();
-        vipData[chatId].vip_until.setDate(vipData[chatId].vip_until.getDate() + addedDays);
-        vipData[chatId].vip_until = vipData[chatId].vip_until.toISOString().split('T')[0];
-        vipData[chatId].order_id = null;
-        vipData[chatId].txn_id = null;
-        vipData[chatId].amount = null;
-        vipData[chatId].qris_expiry = null;
-        vipData[chatId].message_id = null;
-        writeJSONFileSync('database/vip_users.json', vipData);
-        return bot.sendMessage(chatId, 'Pembayaran berhasil diterima! VIP kamu sudah aktif.\n\nCek status VIP: /status');
-    } else if (status === 'pending') return bot.sendMessage(chatId, 'Pembayaran masih dalam status pending. Segera selesaikan pembayaran.');
-    else {
-        return bot.sendMessage(chatId, `Pembayaran gagal atau dibatalkan. Status saat ini: ${status}. Kamu bisa mencoba membeli VIP lagi jika masih berminat.`, { reply_markup: {
-            inline_keyboard: [
-                [{ text: 'Beli VIP', callback_data: JSON.stringify({ function: '08' }) }]
-            ]
-        } });
-    }
+    return bot.sendMessage(chatId, 'Pembayaran diproses otomatis melalui webhook. Silakan tunggu beberapa saat.');
 }
 
 async function setDisc(bot, msg) {

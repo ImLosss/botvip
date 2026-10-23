@@ -1,7 +1,9 @@
 require('module-alias/register');
 const http = require('http');
 const console = require('console');
-const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
+const crypto = require('crypto');
+const { readJSONFileSync, writeJSONFileSync, sleep } = require('function/utils');
+
 
 module.exports = function(bot) {
   let config = readJSONFileSync('./config.json');
@@ -13,21 +15,36 @@ module.exports = function(bot) {
       });
       req.on('end', async () => {
         try {
-          if (req.url === '/pakasir' || req.url === '/pakasir-webhook') {
+          if (req.url === '/payment-webhook') {
             const data = JSON.parse(body || '{}');
+            const tokenPayment = config.TOKEN_PAYMENT;
+            const receivedSignature = typeof data.signature === 'string' ? data.signature : '';
+            const expectedSignature = tokenPayment
+              ? crypto.createHmac('sha512', tokenPayment).update(String(data.amount)).digest('hex')
+              : '';
+
+            const signaturesMatch = receivedSignature.length === expectedSignature.length &&
+              Boolean(tokenPayment) &&
+              crypto.timingSafeEqual(Buffer.from(receivedSignature), Buffer.from(expectedSignature));
+            if (!signaturesMatch) {
+              res.writeHead(401, { 'Content-Type': 'application/json' });
+              return res.end(JSON.stringify({ status: 'error', message: 'Invalid signature' }));
+            }
 
             console.log(data, 'webhook payload');
-            if(data.status == 'completed') {
-              const order_id = data.order_id;
-              const txn_id = data.txn_id;
+            if (['completed', 'success', 'paid', 'settlement'].includes(String(data.status).toLowerCase())) {
+              const order_id = data.details?.orderId;
 
               let vipData = readJSONFileSync('database/vip_users.json');
-              let config = readJSONFileSync('./config.json');
               let chatId = Object.keys(vipData).find(id => {
                 const user = vipData[id];
-                return (order_id && user.order_id === order_id) || (txn_id && user.txn_id === txn_id);
+                return order_id && user.order_id === order_id;
               });
-              if(!chatId) return console.log(`No matching chatId found for order_id: ${order_id}, txn_id: ${txn_id}`);
+              if (!chatId) {
+                console.log(`No matching chatId found for order_id: ${order_id}`);
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ status: 'error', message: 'Order not found' }));
+              }
 
               let month = vipData[chatId].month;
 
@@ -50,15 +67,23 @@ module.exports = function(bot) {
               vipData[chatId].message_id = null;
 
               config.REVENUE = (config.REVENUE || 0) + revenue;
-              config.BALANCE = (config.BALANCE || 0) + data.amount;
+              config.BALANCE = (config.BALANCE || 0) + Number(data.amount);
 
               writeJSONFileSync('database/vip_users.json', vipData);
               writeJSONFileSync('./config.json', config);
 
-              bot.sendMessage(chatId, `Pembayaran dengan Order ID: <code>${data.order_id}</code> telah berhasil diproses.\n\nVIP kamu aktif hingga: <b>${vipData[chatId].vip_until}.</b>\n\nKirim /status untuk cek status VIP kamu.\n\nTerima kasih telah melakukan pembayaran! 🙏`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [ [{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL.replace('@', '')}` }] ] } }).catch(err => console.error('Failed to send success message:', err.message));
-              bot.sendMessage(config.DB_ID, `anda mendapatkan komisi sebesar Rp ${revenue} dari pembayaran VIP user dengan order_id: <code>${data.order_id}</code>.\n\nTotal revenue: Rp ${config.REVENUE}\nBalance: Rp ${config.BALANCE}`, { parse_mode: 'HTML' }).catch(err => console.error('Failed to send commission message:', err.message));
-              bot.sendMessage(config.OWNER_ID, `Pembayaran VIP berhasil diproses untuk user ${chatId} selama ${month} bulan sebesar ${data.amount} dengan order_id: <code>${data.order_id}</code>.\n\nVIP aktif hingga: <b>${vipData[chatId].vip_until}</b>`, { parse_mode: 'HTML' }).catch(err => console.error('Failed to send owner message:', err.message));
+              await bot.sendMessage(chatId, `Pembayaran dengan Order ID: <code>${order_id}</code> telah berhasil diproses.\n\nVIP kamu aktif hingga: <b>${vipData[chatId].vip_until}.</b>\n\nKirim /status untuk cek status VIP kamu.\n\nTerima kasih telah melakukan pembayaran! 🙏`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [ [{ text: 'Channel VIP', url: `https://t.me/${config.USERNAME_CHANNEL.replace('@', '')}` }] ] } }).catch(err => console.error('Failed to send success message:', err.message));
+              await sleep(2000);
+              await bot.sendMessage(config.DB_ID, `anda mendapatkan komisi sebesar Rp ${revenue} dari pembayaran VIP user dengan order_id: <code>${order_id}</code>.\n\nTotal revenue: Rp ${config.REVENUE}\nBalance: Rp ${config.BALANCE}`, { parse_mode: 'HTML' }).catch(err => console.error('Failed to send commission message:', err.message));
+              await sleep(2000);
+              await bot.sendMessage(config.OWNER_ID, `Pembayaran VIP berhasil diproses untuk user ${chatId} selama ${month} bulan sebesar ${data.amount} dengan order_id: <code>${order_id}</code>.\n\nVIP aktif hingga: <b>${vipData[chatId].vip_until}</b>`, { parse_mode: 'HTML' }).catch(err => console.error('Failed to send owner message:', err.message));
             }
+          /*
+          Logic webhook Pakasir lama:
+          if (req.url === '/pakasir' || req.url === '/pakasir-webhook') {
+            ...
+          }
+          */
           }
         } catch (e) {
           console.error(e);
