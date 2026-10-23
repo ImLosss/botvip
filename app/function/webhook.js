@@ -17,7 +17,7 @@ module.exports = function(bot) {
         try {
           if (req.url === '/payment-webhook') {
             const data = JSON.parse(body || '{}');
-            const tokenPayment = config.TOKEN_PAYMENT;
+            const tokenPayment = config.PAYMENT_API_TOKEN;
             const receivedSignature = typeof data.signature === 'string' ? data.signature : '';
             const expectedSignature = tokenPayment
               ? crypto.createHmac('sha512', tokenPayment).update(String(data.amount)).digest('hex')
@@ -27,6 +27,7 @@ module.exports = function(bot) {
               Boolean(tokenPayment) &&
               crypto.timingSafeEqual(Buffer.from(receivedSignature), Buffer.from(expectedSignature));
             if (!signaturesMatch) {
+              console.log('Invalid signature received in webhook:', { receivedSignature, expectedSignature });
               res.writeHead(401, { 'Content-Type': 'application/json' });
               return res.end(JSON.stringify({ status: 'error', message: 'Invalid signature' }));
             }
