@@ -166,15 +166,6 @@ async function cancelTransaction(bot, query) {
     if (!transactionId) return bot.sendMessage(chatId, 'Tidak ada transaksi yang sedang berlangsung.');
     const cancelResult = await cancelQrisTransaction(transactionId).catch(err => ({ error: true, message: err.message }));
     if (cancelResult?.error) return bot.sendMessage(chatId, 'Gagal membatalkan transaksi. Silakan coba lagi nanti.');
-    vipData[chatId].qris_expiry = null;
-    vipData[chatId].order_id = null;
-    vipData[chatId].txn_id = null;
-    vipData[chatId].amount = null;
-    vipData[chatId].month = null;
-    vipData[chatId].message_id = null;
-    writeJSONFileSync('database/vip_users.json', vipData);
-
-    bot.deleteMessage(chatId, query.message.message_id).catch(err => console.error('Failed to delete message:', err.message));
 
     bot.sendMessage(chatId, 'Transaksi berhasil dibatalkan. Kamu bisa mencoba membeli VIP lagi jika masih berminat.', { reply_markup: {
         inline_keyboard: [

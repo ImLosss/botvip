@@ -18,7 +18,7 @@ module.exports = function(bot) {
           if (req.url === '/payment-webhook') {
             const data = JSON.parse(body || '{}');
             const config = readJSONFileSync('./config.json');
-            const tokenPayment = config.PAYMENT_API_TOKEN;
+            const tokenPayment = config.TOKEN_PAYMENT || config.PAYMENT_API_TOKEN;
             const receivedSignature = typeof data.signature === 'string' ? data.signature : '';
             const expectedSignature = tokenPayment
               ? crypto.createHmac('sha512', tokenPayment).update(String(data.amount)).digest('hex')
@@ -28,15 +28,18 @@ module.exports = function(bot) {
               Boolean(tokenPayment) &&
               crypto.timingSafeEqual(Buffer.from(receivedSignature), Buffer.from(expectedSignature));
             if (!signaturesMatch) {
-              console.log('Invalid signature received in webhook:', { receivedSignature, expectedSignature });
+              console.log('Invalid signature received in webhook');
               res.writeHead(401, { 'Content-Type': 'application/json' });
               return res.end(JSON.stringify({ status: 'error', message: 'Invalid signature' }));
             }
 
             console.log(data, 'webhook payload');
-            if (['completed', 'success', 'paid', 'settlement'].includes(String(data.status).toLowerCase())) {
-              const order_id = data.details?.orderId;
+            const status = String(data.status || '').toLowerCase();
+            const order_id = data.details?.orderId;
+            const isSuccess = ['completed', 'success', 'paid', 'settlement'].includes(status);
+            const isFailed = ['failed', 'cancelled', 'canceled', 'expired'].includes(status);
 
+            if (isSuccess || isFailed) {
               let vipData = readJSONFileSync('database/vip_users.json');
               let chatId = Object.keys(vipData).find(id => {
                 const user = vipData[id];
@@ -46,6 +49,30 @@ module.exports = function(bot) {
                 console.log(`No matching chatId found for order_id: ${order_id}`);
                 res.writeHead(404, { 'Content-Type': 'application/json' });
                 return res.end(JSON.stringify({ status: 'error', message: 'Order not found' }));
+              }
+
+              const messageId = vipData[chatId].message_id;
+              if (messageId) {
+                await bot.deleteMessage(chatId, messageId)
+                  .catch(err => console.error('Failed to delete QR message:', err.message));
+              }
+
+              if (isFailed) {
+                vipData[chatId].order_id = null;
+                vipData[chatId].txn_id = null;
+                vipData[chatId].amount = null;
+                vipData[chatId].month = null;
+                vipData[chatId].qris_expiry = null;
+                vipData[chatId].message_id = null;
+                writeJSONFileSync('database/vip_users.json', vipData);
+
+                await bot.sendMessage(
+                  chatId,
+                  `Transaksi QRIS dengan Order ID: <code>${order_id}</code> gagal atau kedaluwarsa. Silakan coba lagi.`,
+                  { parse_mode: 'HTML' }
+                ).catch(err => console.error('Failed to send failed-payment message:', err.message));
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ status: 'success' }));
               }
 
               let month = vipData[chatId].month;
@@ -63,8 +90,6 @@ module.exports = function(bot) {
               vipData[chatId].amount = null;
               vipData[chatId].month = null;
               vipData[chatId].qris_expiry = null;
-
-              bot.deleteMessage(chatId, vipData[chatId].message_id).catch(err => console.error('Failed to delete message:', err.message))
 
               vipData[chatId].message_id = null;
 
