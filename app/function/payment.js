@@ -9,7 +9,7 @@ function getPaymentHeaders(config) {
 
   return {
     'Content-Type': 'application/json',
-    Authorization: paymentApiToken,
+    Authorization: `Bearer ${paymentApiToken}`,
   };
 }
 
