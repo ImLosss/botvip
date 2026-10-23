@@ -17,6 +17,7 @@ module.exports = function(bot) {
         try {
           if (req.url === '/payment-webhook') {
             const data = JSON.parse(body || '{}');
+            const config = readJSONFileSync('./config.json');
             const tokenPayment = config.PAYMENT_API_TOKEN;
             const receivedSignature = typeof data.signature === 'string' ? data.signature : '';
             const expectedSignature = tokenPayment
