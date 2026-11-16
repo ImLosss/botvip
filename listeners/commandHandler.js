@@ -32,6 +32,7 @@ const prefixFunctionsDB = {
     'backup': withErrorHandling((bot, msg, value, config, fromId) => cmd.backup(bot, msg)),
     'setdisc': withErrorHandling((bot, msg, value, config, fromId) => cmd.setDisc(bot, msg)),
     'setmonths': withErrorHandling((bot, msg, value, config, fromId) => cmd.setMonths(bot, msg, config)),
+    'reset': withErrorHandling((bot, msg, value, config, fromId) => cmd.reset(bot, msg, config)),
 }
 
 module.exports = (function() {

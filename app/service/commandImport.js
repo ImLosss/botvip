@@ -5,11 +5,13 @@ const series = require('function/series');
 const watchVip = require('function/watchVip');
 const help = require('function/help');
 const backup = require('function/backup');
+const reset = require('function/reset');
 
 module.exports = {
     ...vip,
     ...series,
     ...watchVip,
     ...help,
+    ...reset,
     ...backup
 };
