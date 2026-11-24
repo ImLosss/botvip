@@ -1,5 +1,5 @@
 require('module-alias/register');
-const { readJSONFileSync, writeJSONFileSync } = require('function/utils');
+const { readJSONFileSync, writeJSONFileSync, escapeHTML } = require('function/utils');
 const { createQrisTransaction, cancelQrisTransaction } = require('function/payment');
 const { getMessageInput } = require('service/messageInputService');
 
@@ -109,7 +109,8 @@ async function chargeTransaction(bot, query, data, config) {
 
     if (!vipData[chatId]) vipData[chatId] = { order_id: null, vip_until: null, message_id: null };
 
-    const username = query.from.username ? `@${query.from.username}` : query.from.first_name + ` ${query.from.last_name || ''}`;
+    const rawUsername = query.from.username ? `@${query.from.username}` : query.from.first_name + ` ${query.from.last_name || ''}`;
+    const username = escapeHTML(rawUsername.trim());
 
     let orderId = `vip-${chatId}-${Date.now()}`;
 
@@ -156,7 +157,10 @@ async function chargeTransaction(bot, query, data, config) {
         vipData[chatId].message_id = result.message_id;
         vipData[chatId].qris_expiry = new Date(Date.now() + expMins * 60000).toISOString();
         writeJSONFileSync('database/vip_users.json', vipData);
-    });  
+    }).catch((error) => {
+        console.error('Error sending photo:', error);
+        bot.sendMessage(chatId, `Terjadi kesalahan saat mengirim QRIS. Contact ${config.USERNAME_ADMIN} untuk bantuan.`, { parse_mode: 'HTML' });
+    });
 }
 
 async function cancelTransaction(bot, query) {

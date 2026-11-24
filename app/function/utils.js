@@ -135,6 +135,14 @@ function getTime() {
     return `${ tanggal } / ${ jam }:${ menit }`;
 }
 
+function escapeHTML(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
 const withErrorHandling = (fn) => {
     return async (...args) => {
         try {
@@ -148,5 +156,5 @@ const withErrorHandling = (fn) => {
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
 module.exports = {
-    getLocation, deleteFile, removeFromArray, readJSONFileSync, writeJSONFileSync, cutVal, withErrorHandling, isJSON, getTime, sleep
+    getLocation, deleteFile, removeFromArray, readJSONFileSync, writeJSONFileSync, cutVal, withErrorHandling, isJSON, getTime, sleep, escapeHTML
 };
